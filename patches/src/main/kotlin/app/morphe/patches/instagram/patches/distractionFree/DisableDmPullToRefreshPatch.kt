@@ -1,14 +1,18 @@
 package app.morphe.patches.instagram.patches.distractionFree
 
-import app.morphe.patcher.Fingerprint
-import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
-import app.morphe.util.returnEarly
+/**
+ * Finds the Direct inbox refresh configuration class through the stable
+ * feature-key string. The key is used by the refresh-container construction
+ * method, while A06() is the boolean gate that enables pull-to-refresh.
+ */
+private object DmPullToRefreshClassFingerprint : Fingerprint(
+    strings = listOf("direct_inbox_pull_to_refresh")
+)
 
 private object DmPullToRefreshFingerprint : Fingerprint(
-    returnType = "Z",
-    strings = listOf("direct_inbox_pull_to_refresh"),
-    definingClass = "LX/08Pq;"
+    classFingerprint = DmPullToRefreshClassFingerprint,
+    name = "A06",
+    returnType = "Z"
 )
 
 @Suppress("unused")
@@ -20,8 +24,6 @@ val disableDmPullToRefreshPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_INSTAGRAM)
 
     execute {
-        DmPullToRefreshFingerprint.classDef.methods.first {
-            it.name == "A06" && it.returnType == "Z"
-        }.returnEarly(false)
+        DmPullToRefreshFingerprint.method.returnEarly(false)
     }
 }
