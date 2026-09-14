@@ -6,6 +6,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
 import app.morphe.util.fieldExtractor
+import app.morphe.util.extensionToClassName
 import com.android.tools.smali.dexlib2.Opcode
 
 /**
@@ -41,6 +42,7 @@ val makeEphemeralMediaPermanentPatch = bytecodePatch(
                 it.location.index > viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT
             }
             val viewModeField = viewModePut.fieldExtractor()
+            val ephemeralMediaClassName = extensionToClassName(viewModeField.definingClass)
             val returnObject = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
             val objectRegister = returnObject.registersUsed[0]
             val scratchRegister = if (objectRegister == 0) 1 else 0
@@ -49,7 +51,7 @@ val makeEphemeralMediaPermanentPatch = bytecodePatch(
                 returnObject.location.index,
                 """
                     const-string v$scratchRegister, "permanent"
-                    iput-object v$scratchRegister, v$objectRegister, ${viewModeField.definingClass}->${viewModeField.name}:Ljava/lang/String;
+                    iput-object v$scratchRegister, v$objectRegister, $ephemeralMediaClassName->${viewModeField.name}:Ljava/lang/String;
                 """.trimIndent(),
             )
         }
