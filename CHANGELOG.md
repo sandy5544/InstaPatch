@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/sandy5544/InstaPatch/compare/v1.0.2...v1.1.0) (2026-09-14)
+
+### ✨ New Features
+
+* remove Instagram version restriction ([d5be6a2](https://github.com/sandy5544/InstaPatch/commit/d5be6a289f977dcef0cf03bbbf20f89ac569e288))
+
 ## [1.0.2](https://github.com/sandy5544/InstaPatch/compare/v1.0.1...v1.0.2) (2026-09-14)
 
 ### 🐛 Bug Fixes
