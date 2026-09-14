@@ -1,10 +1,36 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "patches": [
     {
       "name": "Disable DM pull-to-refresh",
       "description": "Disables pull-to-refresh in the Instagram Direct inbox without disabling refresh elsewhere.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.instagram.android",
+          "name": "Instagram",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": null,
+          "signatures": null,
+          "targets": [
+            {
+              "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Show Follows You",
+      "description": "Shows a Follows you indicator on Instagram profiles for accounts that follow you.",
       "default": true,
       "dependencies": [],
       "compatiblePackages": [
