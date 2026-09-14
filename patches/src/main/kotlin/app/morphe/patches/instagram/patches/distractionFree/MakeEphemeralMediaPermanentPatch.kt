@@ -38,24 +38,26 @@ val antiViewOnceMediaPatch = bytecodePatch(
 
     execute {
         EphemeralMediaJsonParserFingerprint.apply {
-            val viewModeStringIndex = stringMatches[1].index
-            val viewModePut = instructions.first {
-                it.location.index > viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT
-            }
-            val viewModeField =
-                (viewModePut as ReferenceInstruction).reference as FieldReference
-            val ephemeralMediaClassName = viewModeField.definingClass
-            val returnObject = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
-            val objectRegister = (returnObject as OneRegisterInstruction).registerA
-            val scratchRegister = if (objectRegister == 0) 1 else 0
+            method.apply {
+                val viewModeStringIndex = stringMatches[1].index
+                val viewModePut = instructions.first {
+                    it.location.index > viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT
+                }
+                val viewModeField =
+                    (viewModePut as ReferenceInstruction).reference as FieldReference
+                val ephemeralMediaClassName = viewModeField.definingClass
+                val returnObject = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
+                val objectRegister = (returnObject as OneRegisterInstruction).registerA
+                val scratchRegister = if (objectRegister == 0) 1 else 0
 
-            method.addInstructions(
-                returnObject.location.index,
-                """
-                    const-string v$scratchRegister, "permanent"
-                    iput-object v$scratchRegister, v$objectRegister, $ephemeralMediaClassName->${viewModeField.name}:Ljava/lang/String;
-                """.trimIndent(),
-            )
+                addInstructions(
+                    returnObject.location.index,
+                    """
+                        const-string v$scratchRegister, "permanent"
+                        iput-object v$scratchRegister, v$objectRegister, $ephemeralMediaClassName->${viewModeField.name}:Ljava/lang/String;
+                    """.trimIndent(),
+                )
+            }
         }
     }
 }
