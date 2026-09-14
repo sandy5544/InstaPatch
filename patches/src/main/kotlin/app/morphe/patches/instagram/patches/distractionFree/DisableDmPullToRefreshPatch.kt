@@ -1,5 +1,10 @@
 package app.morphe.patches.instagram.patches.distractionFree
 
+import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
+import app.morphe.util.returnEarly
+
 /**
  * Finds the Direct inbox refresh configuration class through the stable
  * feature-key string. The key is used by the refresh-container construction
