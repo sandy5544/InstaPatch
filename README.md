@@ -5,7 +5,7 @@ A focused Morphe patch source containing one Instagram patch.
 ## ⚙️ Patch Details
 
 <!-- PATCHES_START -->
-> **[v1.4.0](https://github.com/sandy5544/InstaPatch/releases/tag/v1.4.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;3 patches total
+> **[v1.4.1](https://github.com/sandy5544/InstaPatch/releases/tag/v1.4.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;3 patches total
 <details open>
 <summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
 <br>

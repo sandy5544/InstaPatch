@@ -1,3 +1,11 @@
+## [1.4.1](https://github.com/sandy5544/InstaPatch/compare/v1.4.0...v1.4.1) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* add valid branch label to anti view once patch ([5bd11b2](https://github.com/sandy5544/InstaPatch/commit/5bd11b2a8b1cf5295bd1c6a4d0b185cd501d3a67))
+* make anti view once patch self-contained ([c95eb74](https://github.com/sandy5544/InstaPatch/commit/c95eb74ca1e193638ab1292272778db22e657a24))
+* restore branch-level anti view once media handling ([62edba1](https://github.com/sandy5544/InstaPatch/commit/62edba111ddd41a405635ea873f5ca494bffc544))
+
 ## [1.4.0](https://github.com/sandy5544/InstaPatch/compare/v1.3.2...v1.4.0) (2026-09-14)
 
 ### 🐛 Bug Fixes
