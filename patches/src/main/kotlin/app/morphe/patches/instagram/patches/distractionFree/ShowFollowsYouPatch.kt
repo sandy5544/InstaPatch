@@ -8,8 +8,6 @@ import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
 /**
  * Locates Instagram's DirectUserRowViewBinder bindView method through its
  * stable diagnostic string and the relationship check used by the row.
- * The row keeps the User in v8 and the display-name CharSequence in v10
- * immediately before the target TextView.setText(v9, v10) call.
  */
 private object UserListRowBindFingerprint : Fingerprint(
     strings = listOf("DirectUserRowViewBinder - Follow button status unknown"),
@@ -42,14 +40,23 @@ val showFollowsYouPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_INSTAGRAM)
 
     execute {
-        // The first TextView.setText call is the user display-name row update.
-        // At this point v8 is the User and v10 is the display-name text.
         val setTextIndex = UserListRowBindFingerprint.instructionMatches[1].index
         UserListRowBindFingerprint.method.addInstructions(
             setTextIndex,
             """
-                invoke-static {v8, v10}, Lapp/morphe/extension/instagram/patches/userlist/FollowsYouIndicator;->append(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/String;
+                invoke-static {v8}, Lcom/instagram/user/model/UserExtKt;->A0V(Lcom/instagram/user/model/User;)Z
+                move-result v0
+                if-eqz v0, :skip_follows_you_indicator
+
+                new-instance v0, Ljava/lang/StringBuilder;
+                invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
+                invoke-virtual {v0, v10}, Ljava/lang/StringBuilder;->append(Ljava/lang/CharSequence;)Ljava/lang/StringBuilder;
+                const-string v1, " • Follows you"
+                invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+                invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
                 move-result-object v10
+
+                :skip_follows_you_indicator
             """
         )
     }
