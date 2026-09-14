@@ -1,3 +1,11 @@
+## [1.0.1](https://github.com/sandy5544/InstaPatch/compare/v1.0.0...v1.0.1) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* identify patch bundle as InstaPatch ([af9337b](https://github.com/sandy5544/InstaPatch/commit/af9337b21b0fbfd596847c7039509a5d06fb1f62))
+* resolve DM pull-to-refresh method through class fingerprint ([2dd299f](https://github.com/sandy5544/InstaPatch/commit/2dd299f3476a68e99019c31a284ba0102561059a))
+* restore DM pull-to-refresh patch imports ([d214ac7](https://github.com/sandy5544/InstaPatch/commit/d214ac775169ce2adc603930efd2cdc07c872db1))
+
 ## 1.0.0 (2026-09-14)
 
 ### ⚠ BREAKING CHANGES
