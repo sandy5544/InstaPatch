@@ -2,21 +2,15 @@ package app.morphe.patches.instagram.patches.distractionFree
 
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
+import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
 import app.morphe.patcher.util.smali.ExternalLabel
+import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
+import app.morphe.util.indexOfFirstInstruction
+import app.morphe.util.registersUsed
 import com.android.tools.smali.dexlib2.Opcode
-import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
-import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
-import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
-import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
-/**
- * Instagram's ephemeral-media parser contains the fields used for view-once /
- * view-twice media. Normalize the parsed view mode at the same branch used by
- * Piko, before the parser can return the ephemeral object.
- */
 private object EphemeralMediaJsonParserFingerprint : Fingerprint(
     custom = { methodDef, _ ->
         methodDef.name.lowercase().contains("parsefromjson")
@@ -28,38 +22,47 @@ private object EphemeralMediaJsonParserFingerprint : Fingerprint(
 @Suppress("unused")
 val antiViewOnceMediaPatch = bytecodePatch(
     name = "Anti View Once Media",
-    description = "Makes Instagram view once and view twice DM media permanently replayable, including after leaving and returning to the chat.",
+    description = "Makes unexpired Instagram view once and view twice DM media permanently replayable.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_INSTAGRAM)
 
     execute {
         EphemeralMediaJsonParserFingerprint.apply {
+            val expireAtStringIndex = stringMatches[0].index
+            val viewModeStringIndex = stringMatches[1].index
+
             method.apply {
-                val viewModeStringIndex = stringMatches[1].index
-                val viewModePut = instructions.first {
-                    it.location.index > viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT
-                }
-                val viewModeField = (viewModePut as ReferenceInstruction).reference as FieldReference
+                val viewModePut = getInstruction(
+                    indexOfFirstInstruction(viewModeStringIndex, Opcode.IPUT_OBJECT),
+                )
+                val viewModeField = viewModePut.fieldExtractor()
                 val mediaClass = viewModeField.definingClass
                 val viewModeFieldName = viewModeField.name
 
-                val returnObject = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
-                val mediaRegister = (returnObject as OneRegisterInstruction).registerA
+                val expireAtField = instructions.last {
+                    it.location.index < viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT &&
+                        it.location.index >= expireAtStringIndex
+                }.fieldExtractor()
+                val expireAtFieldName = expireAtField.name
 
-                val ifEqInstructions = instructions.filter { it.opcode == Opcode.IF_EQ }
-                check(ifEqInstructions.size >= 2) { "Instagram 439: expected ephemeral-media IF_EQ branch" }
-                val branch = ifEqInstructions[1]
-                val branchRegisters = branch as TwoRegisterInstruction
-                val registerA = branchRegisters.registerA
-                val registerB = branchRegisters.registerB
+                val returnObject = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
+                val mediaRegister = returnObject.registersUsed[0]
+
+                val branch = instructions.filter { it.opcode == Opcode.IF_EQ }[1]
+                val branchRegisters = branch.registersUsed
+                val registerA = branchRegisters[0]
+                val registerB = branchRegisters[1]
 
                 addInstructionsWithLabels(
                     branch.location.index,
                     """
                     if-ne v$registerA, v$registerB, :morphe_ephemeral_continue
-                    const-string v1, "permanent"
-                    iput-object v1, v$mediaRegister, $mediaClass->$viewModeFieldName:${viewModeField.type}
+                    iget-object v0, v$mediaRegister, $mediaClass->$expireAtFieldName:Ljava/lang/Long;
+                    iget-object v1, v$mediaRegister, $mediaClass->$viewModeFieldName:Ljava/lang/String;
+                    invoke-static {v0, v1}, Lapp/morphe/extension/instagram/patches/dm/EphemeralMediaPatch;->makeEphemeralMediaPermanent(Ljava/lang/Long;Ljava/lang/String;)Ljava/lang/String;
+                    move-result-object v1
+                    iput-object v1, v$mediaRegister, $mediaClass->$viewModeFieldName:Ljava/lang/String;
                     return-object v$mediaRegister
                     """.trimIndent(),
                     ExternalLabel("morphe_ephemeral_continue", branch),
