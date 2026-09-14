@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/sandy5544/InstaPatch/compare/v1.1.0...v1.2.0) (2026-09-14)
+
+### ✨ New Features
+
+* add follows-you indicator to user lists ([9edb72c](https://github.com/sandy5544/InstaPatch/commit/9edb72cfea6811f83321fca1d94952a6f540ab38))
+
 ## [1.1.0](https://github.com/sandy5544/InstaPatch/compare/v1.0.2...v1.1.0) (2026-09-14)
 
 ### ✨ New Features

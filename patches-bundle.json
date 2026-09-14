@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-14T10:20:58",
-  "description": "## [1.1.0](https://github.com/sandy5544/InstaPatch/compare/v1.0.2...v1.1.0) (2026-09-14)\n\n### ✨ New Features\n\n* remove Instagram version restriction ([d5be6a2](https://github.com/sandy5544/InstaPatch/commit/d5be6a289f977dcef0cf03bbbf20f89ac569e288))",
-  "download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.1.0/patches-1.1.0.mpp",
-  "signature_download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.1.0/patches-1.1.0.mpp.asc",
-  "version": "1.1.0"
+  "created_at": "2026-09-14T10:49:47",
+  "description": "## [1.2.0](https://github.com/sandy5544/InstaPatch/compare/v1.1.0...v1.2.0) (2026-09-14)\n\n### ✨ New Features\n\n* add follows-you indicator to user lists ([9edb72c](https://github.com/sandy5544/InstaPatch/commit/9edb72cfea6811f83321fca1d94952a6f540ab38))",
+  "download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.2.0/patches-1.2.0.mpp",
+  "signature_download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.2.0/patches-1.2.0.mpp.asc",
+  "version": "1.2.0"
 }
