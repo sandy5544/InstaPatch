@@ -16,8 +16,8 @@ import java.util.Locale;
  */
 public final class FollowsYouIndicator {
     private static final String SUFFIX = " • Follows you";
-    private static final int MAX_ATTEMPTS = 8;
-    private static final long RETRY_DELAY_MS = 120L;
+    private static final int MAX_ATTEMPTS = 16;
+    private static final long RETRY_DELAY_MS = 150L;
 
     private FollowsYouIndicator() {
     }
@@ -54,15 +54,12 @@ public final class FollowsYouIndicator {
     }
 
     private static String readUsername(Object user) {
+        // Instagram's public model API, when present.
         try {
-            for (Method method : user.getClass().getMethods()) {
-                if ("getUsername".equals(method.getName()) && method.getParameterTypes().length == 0
-                        && method.getReturnType() == String.class) {
-                    Object value = method.invoke(user);
-                    if (value instanceof String) {
-                        return (String) value;
-                    }
-                }
+            Method method = user.getClass().getMethod("getUsername");
+            Object value = method.invoke(user);
+            if (value instanceof String && !((String) value).isEmpty()) {
+                return (String) value;
             }
         } catch (Throwable ignored) {
         }
@@ -144,16 +141,24 @@ public final class FollowsYouIndicator {
     }
 
     private static String stripSuffix(String text) {
-        return text.endsWith(SUFFIX) ? text.substring(0, text.length() - SUFFIX.length()) : text;
+        int suffixIndex = text.indexOf(SUFFIX);
+        return suffixIndex >= 0 ? text.substring(0, suffixIndex).trim() : text.trim();
     }
 
     private static boolean matchesUsername(String text, String username) {
-        String left = normalize(text);
-        String right = normalize(username);
-        return left.equals(right) || left.equals("@" + right);
+        String left = normalizeUsername(text);
+        String right = normalizeUsername(username);
+        return left.equals(right);
     }
 
-    private static String normalize(String value) {
-        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    private static String normalizeUsername(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if (normalized.startsWith("@")) {
+            normalized = normalized.substring(1);
+        }
+        return normalized;
     }
 }
