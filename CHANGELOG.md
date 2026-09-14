@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/sandy5544/InstaPatch/compare/v1.0.1...v1.0.2) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* import Morphe instruction extension ([7caf792](https://github.com/sandy5544/InstaPatch/commit/7caf79258494c20ed97279dc91f4e7ba9147cd23))
+* **instagram:** disable DM refresh container gesture ([8d0e123](https://github.com/sandy5544/InstaPatch/commit/8d0e1236810438458b963d54f62329eb9a999879))
+
 ## [1.0.1](https://github.com/sandy5544/InstaPatch/compare/v1.0.0...v1.0.1) (2026-09-14)
 
 ### 🐛 Bug Fixes
