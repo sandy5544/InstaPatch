@@ -1,3 +1,16 @@
+## [1.4.0](https://github.com/sandy5544/InstaPatch/compare/v1.3.2...v1.4.0) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* access ephemeral parser instructions from mutable method ([fea4346](https://github.com/sandy5544/InstaPatch/commit/fea4346ebcc2f3534747e4e59d0a91f0ce625a07))
+* rename permanent ephemeral patch to anti view once media ([12ab538](https://github.com/sandy5544/InstaPatch/commit/12ab5388af36bc5b19ab62a3699d80c05671e541))
+* use available dex instruction APIs for anti view once patch ([3fa8114](https://github.com/sandy5544/InstaPatch/commit/3fa8114c3a39445da220b874cee47c3c5b368bc6))
+* use resolved ephemeral media class descriptor ([cecff80](https://github.com/sandy5544/InstaPatch/commit/cecff80faa85973d2a0cc2d1eb7aace69611332d))
+
+### ✨ New Features
+
+* add robust permanent ephemeral media patch ([e7808db](https://github.com/sandy5544/InstaPatch/commit/e7808dbe11ef654e5a2ccf2e6dc91cb15cf0801f))
+
 ## [1.3.2](https://github.com/sandy5544/InstaPatch/compare/v1.3.1...v1.3.2) (2026-09-14)
 
 ### 🐛 Bug Fixes
