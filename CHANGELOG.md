@@ -1,3 +1,12 @@
+## [1.2.1](https://github.com/sandy5544/InstaPatch/compare/v1.2.0...v1.2.1) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* add reliable follows-you row helper ([803ccb4](https://github.com/sandy5544/InstaPatch/commit/803ccb4900c8f46e35949078bbbb8e865573fbe3))
+* inject follows-you text directly ([de74122](https://github.com/sandy5544/InstaPatch/commit/de74122c7bd4777076418654c13f8aacbae4c908))
+* remove uncompilable follows-you helper ([da2523a](https://github.com/sandy5544/InstaPatch/commit/da2523a07bdc5e91aa2e0b1fef61f29cf4ba067f))
+* target actual user list row binder ([7b0de33](https://github.com/sandy5544/InstaPatch/commit/7b0de3312b3d66938c5cda9cbaf7c5ab1add7c90))
+
 ## [1.2.0](https://github.com/sandy5544/InstaPatch/compare/v1.1.0...v1.2.0) (2026-09-14)
 
 ### ✨ New Features
