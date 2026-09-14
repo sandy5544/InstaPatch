@@ -1,3 +1,9 @@
+## [1.3.1](https://github.com/sandy5544/InstaPatch/compare/v1.3.0...v1.3.1) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* make Follows You profile indicator view matching robust ([5e0b93c](https://github.com/sandy5544/InstaPatch/commit/5e0b93c63b469ed6274caeab1bcf0868edae0294))
+
 ## [1.3.0](https://github.com/sandy5544/InstaPatch/compare/v1.2.2...v1.3.0) (2026-09-14)
 
 ### ✨ New Features
