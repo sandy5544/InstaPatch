@@ -5,8 +5,8 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
-import app.morphe.util.fieldExtractor
 import app.morphe.util.extensionToClassName
+import app.morphe.util.fieldExtractor
 import com.android.tools.smali.dexlib2.Opcode
 
 /**
@@ -28,8 +28,8 @@ private object EphemeralMediaJsonParserFingerprint : Fingerprint(
 )
 
 @Suppress("unused")
-val makeEphemeralMediaPermanentPatch = bytecodePatch(
-    name = "Make ephemeral media permanent",
+val antiViewOnceMediaPatch = bytecodePatch(
+    name = "Anti View Once Media",
     description = "Makes Instagram view once and view twice DM media permanently replayable, including after leaving and returning to the chat.",
     default = true,
 ) {
