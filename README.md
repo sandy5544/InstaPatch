@@ -5,15 +5,16 @@ A focused Morphe patch source containing one Instagram patch.
 ## ⚙️ Patch Details
 
 <!-- PATCHES_START -->
-> **[v1.4.2](https://github.com/sandy5544/InstaPatch/releases/tag/v1.4.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;3 patches total
+> **[v1.5.0](https://github.com/sandy5544/InstaPatch/releases/tag/v1.5.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;4 patches total
 <details open>
-<summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
+<summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Anti View Once Media](#anti-view-once-media) | Makes unexpired Instagram view once and view twice DM media permanently replayable. |  |
 | [Disable DM pull-to-refresh](#disable-dm-pull-to-refresh) | Disables pull-to-refresh in the Instagram Direct inbox without disabling refresh elsewhere. |  |
+| [Enable PrimeMods Premium](#enable-primemods-premium) | Forces the PrimeMods premium entitlement to enabled locally. |  |
 | [Show Follows You](#show-follows-you) | Shows a Follows you indicator on Instagram profiles for accounts that follow you. |  |
 
 </details>

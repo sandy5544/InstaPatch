@@ -1,3 +1,9 @@
+## [1.5.0](https://github.com/sandy5544/InstaPatch/compare/v1.4.2...v1.5.0) (2026-09-14)
+
+### ✨ New Features
+
+* add PrimeMods premium enabler ([e0f32cd](https://github.com/sandy5544/InstaPatch/commit/e0f32cd849b23fdb481d66373166c87655dedaec))
+
 ## [1.4.2](https://github.com/sandy5544/InstaPatch/compare/v1.4.1...v1.4.2) (2026-09-14)
 
 ### 🐛 Bug Fixes

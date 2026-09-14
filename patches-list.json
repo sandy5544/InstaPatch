@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "patches": [
     {
       "name": "Anti View Once Media",
@@ -32,6 +32,32 @@
       "name": "Disable DM pull-to-refresh",
       "description": "Disables pull-to-refresh in the Instagram Direct inbox without disabling refresh elsewhere.",
       "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.instagram.android",
+          "name": "Instagram",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": null,
+          "signatures": null,
+          "targets": [
+            {
+              "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Enable PrimeMods Premium",
+      "description": "Forces the PrimeMods premium entitlement to enabled locally.",
+      "default": false,
       "dependencies": [],
       "compatiblePackages": [
         {
