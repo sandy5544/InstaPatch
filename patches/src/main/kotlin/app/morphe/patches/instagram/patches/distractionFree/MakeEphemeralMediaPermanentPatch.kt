@@ -5,9 +5,10 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
-import app.morphe.util.extensionToClassName
-import app.morphe.util.fieldExtractor
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
 /**
  * Instagram's ephemeral-media parser contains the fields used for view-once /
@@ -41,10 +42,11 @@ val antiViewOnceMediaPatch = bytecodePatch(
             val viewModePut = instructions.first {
                 it.location.index > viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT
             }
-            val viewModeField = viewModePut.fieldExtractor()
-            val ephemeralMediaClassName = extensionToClassName(viewModeField.definingClass)
+            val viewModeField =
+                (viewModePut as ReferenceInstruction).reference as FieldReference
+            val ephemeralMediaClassName = viewModeField.definingClass
             val returnObject = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
-            val objectRegister = returnObject.registersUsed[0]
+            val objectRegister = (returnObject as OneRegisterInstruction).registerA
             val scratchRegister = if (objectRegister == 0) 1 else 0
 
             method.addInstructions(
