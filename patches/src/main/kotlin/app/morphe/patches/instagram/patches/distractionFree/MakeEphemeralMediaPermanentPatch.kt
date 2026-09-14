@@ -1,24 +1,21 @@
 package app.morphe.patches.instagram.patches.distractionFree
 
 import app.morphe.patcher.Fingerprint
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
-import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
-import app.morphe.patches.instagram.entity.messageInfoEntity.messageInfoEntity
-import app.morphe.patches.instagram.misc.directMessage.saveAllMessages.saveAllMessagesPatch
-import app.morphe.patches.instagram.misc.settings.settingsPatch
-import app.morphe.patches.instagram.utils.Constants.PATCHES_DESCRIPTOR
-import app.morphe.patches.instagram.utils.enableSettings
-import app.morphe.util.extensionToClassName
-import app.morphe.util.fieldExtractor
-import app.morphe.patcher.util.smali.ExternalLabel
-import app.morphe.util.indexOfFirstInstruction
-import app.morphe.util.registersUsed
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
-internal object EphemeralMediaJsonParserFingerprint : Fingerprint(
+/**
+ * Instagram's ephemeral-media parser contains the fields used for view-once /
+ * view-twice media. Normalize the parsed view mode before the object is
+ * returned so subsequent reparses do not restore the ephemeral state.
+ */
+private object EphemeralMediaJsonParserFingerprint : Fingerprint(
     custom = { methodDef, _ ->
         methodDef.name.lowercase().contains("parsefromjson")
     },
@@ -33,53 +30,40 @@ val antiViewOnceMediaPatch = bytecodePatch(
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_INSTAGRAM)
-    dependsOn(settingsPatch, messageInfoEntity, saveAllMessagesPatch)
 
     execute {
         EphemeralMediaJsonParserFingerprint.apply {
-            val expireAtStringIndex = stringMatches[0].index
-            val viewModeStringIndex = stringMatches[1].index
             method.apply {
-                val viewModeIPutObjectInstruction =
-                    getInstruction(indexOfFirstInstruction(viewModeStringIndex, Opcode.IPUT_OBJECT))
+                val viewModeStringIndex = stringMatches[1].index
+                val viewModePut = instructions.first {
+                    it.location.index > viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT
+                }
+                val viewModeField = (viewModePut as ReferenceInstruction).reference as FieldReference
+                val mediaClass = viewModeField.definingClass
+                val viewModeFieldName = viewModeField.name
 
-                val viewModeInstructionExtraction = viewModeIPutObjectInstruction.fieldExtractor()
-                val ephemeralMediaClassName = extensionToClassName(viewModeInstructionExtraction.definingClass)
-                val viewModeFieldName = viewModeInstructionExtraction.name
+                val returnObject = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
+                val mediaRegister = (returnObject as OneRegisterInstruction).registerA
 
-                val expireAtInstructionExtraction =
-                    instructions.last {
-                        it.location.index < viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT
-                    }.fieldExtractor()
-                val expireAtFieldName = expireAtInstructionExtraction.name
+                // Instagram 439 has two IF_EQ instructions in this parser. The
+                // second one is the ephemeral-media branch used by Piko.
+                val ifEqInstructions = instructions.filter { it.opcode == Opcode.IF_EQ }
+                check(ifEqInstructions.size >= 2) { "Instagram 439: expected ephemeral-media IF_EQ branch" }
+                val branch = ifEqInstructions[1]
+                val branchRegisters = (branch as com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction)
+                val registerA = branchRegisters.registerA
+                val registerB = branchRegisters.registerB
 
-                val returnObjectInstruction = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
-                val ephemeralMediaClassRegister = returnObjectInstruction.registersUsed[0]
-
-                val midIfEqInstruction = instructions.filter { it.opcode == Opcode.IF_EQ }[1]
-                val midIfEqIndex = midIfEqInstruction.location.index
-                val registers = midIfEqInstruction.registersUsed
-                val registerA = registers[0]
-                val registerB = registers[1]
-
-                addInstructionsWithLabels(
-                    midIfEqIndex,
+                addInstructions(
+                    branch.location.index,
                     """
-                    if-ne v$registerA, v$registerB, :piko_continue
-
-                    iget-object v0, v$ephemeralMediaClassRegister, $ephemeralMediaClassName->$expireAtFieldName:Ljava/lang/Long;
-                    iget-object v1, v$ephemeralMediaClassRegister, $ephemeralMediaClassName->$viewModeFieldName:Ljava/lang/String;
-
-                    invoke-static {v0, v1}, $PATCHES_DESCRIPTOR/dm/EphemeralMediaPatch;->makeEphemeralMediaPermanent(Ljava/lang/Long;Ljava/lang/String;)Ljava/lang/String;
-                    move-result-object v1
-
-                    iput-object v1, v$ephemeralMediaClassRegister, $ephemeralMediaClassName->$viewModeFieldName:Ljava/lang/String;
-                    return-object v$ephemeralMediaClassRegister
+                    if-ne v$registerA, v$registerB, :morphe_ephemeral_continue
+                    const-string v1, "permanent"
+                    iput-object v1, v$mediaRegister, $mediaClass->$viewModeFieldName:${viewModeField.type}
+                    return-object v$mediaRegister
                     """.trimIndent(),
-                    ExternalLabel("piko_continue", midIfEqInstruction),
                 )
             }
         }
-        enableSettings("unlimitedReplaysOnEphemeralMedia")
     }
 }
