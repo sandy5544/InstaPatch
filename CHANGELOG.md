@@ -1,3 +1,9 @@
+## [1.3.2](https://github.com/sandy5544/InstaPatch/compare/v1.3.1...v1.3.2) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* place Follows You indicator in profile header ([5d1f9ec](https://github.com/sandy5544/InstaPatch/commit/5d1f9ec7289dde281ecc2c7709a24c081225a310))
+
 ## [1.3.1](https://github.com/sandy5544/InstaPatch/compare/v1.3.0...v1.3.1) (2026-09-14)
 
 ### 🐛 Bug Fixes
