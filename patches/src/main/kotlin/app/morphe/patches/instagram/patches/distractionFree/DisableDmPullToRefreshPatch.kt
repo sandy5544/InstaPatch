@@ -6,7 +6,6 @@ import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
 import app.morphe.util.returnEarly
 
 private object DmPullToRefreshFingerprint : Fingerprint(
-    name = "A06",
     returnType = "Z",
     strings = listOf("direct_inbox_pull_to_refresh"),
     definingClass = "LX/08Pq;"
@@ -21,6 +20,8 @@ val disableDmPullToRefreshPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_INSTAGRAM)
 
     execute {
-        DmPullToRefreshFingerprint.method.returnEarly(false)
+        DmPullToRefreshFingerprint.classDef.methods.first {
+            it.name == "A06" && it.returnType == "Z"
+        }.returnEarly(false)
     }
 }
