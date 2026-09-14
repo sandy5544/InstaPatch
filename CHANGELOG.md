@@ -1,3 +1,9 @@
+## [1.2.2](https://github.com/sandy5544/InstaPatch/compare/v1.2.1...v1.2.2) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* remove follows-you patch ([fc3c78d](https://github.com/sandy5544/InstaPatch/commit/fc3c78dc0ed1fd8536a723183ac69e85816c837b))
+
 ## [1.2.1](https://github.com/sandy5544/InstaPatch/compare/v1.2.0...v1.2.1) (2026-09-14)
 
 ### 🐛 Bug Fixes

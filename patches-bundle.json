@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-14T11:12:01",
-  "description": "## [1.2.1](https://github.com/sandy5544/InstaPatch/compare/v1.2.0...v1.2.1) (2026-09-14)\n\n### 🐛 Bug Fixes\n\n* add reliable follows-you row helper ([803ccb4](https://github.com/sandy5544/InstaPatch/commit/803ccb4900c8f46e35949078bbbb8e865573fbe3))\n* inject follows-you text directly ([de74122](https://github.com/sandy5544/InstaPatch/commit/de74122c7bd4777076418654c13f8aacbae4c908))\n* remove uncompilable follows-you helper ([da2523a](https://github.com/sandy5544/InstaPatch/commit/da2523a07bdc5e91aa2e0b1fef61f29cf4ba067f))\n* target actual user list row binder ([7b0de33](https://github.com/sandy5544/InstaPatch/commit/7b0de3312b3d66938c5cda9cbaf7c5ab1add7c90))",
-  "download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.2.1/patches-1.2.1.mpp",
-  "signature_download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.2.1/patches-1.2.1.mpp.asc",
-  "version": "1.2.1"
+  "created_at": "2026-09-14T11:16:35",
+  "description": "## [1.2.2](https://github.com/sandy5544/InstaPatch/compare/v1.2.1...v1.2.2) (2026-09-14)\n\n### 🐛 Bug Fixes\n\n* remove follows-you patch ([fc3c78d](https://github.com/sandy5544/InstaPatch/commit/fc3c78dc0ed1fd8536a723183ac69e85816c837b))",
+  "download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.2.2/patches-1.2.2.mpp",
+  "signature_download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.2.2/patches-1.2.2.mpp.asc",
+  "version": "1.2.2"
 }

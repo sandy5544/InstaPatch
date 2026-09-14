@@ -5,15 +5,14 @@ A focused Morphe patch source containing one Instagram patch.
 ## ⚙️ Patch Details
 
 <!-- PATCHES_START -->
-> **[v1.2.1](https://github.com/sandy5544/InstaPatch/releases/tag/v1.2.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;2 patches total
+> **[v1.2.2](https://github.com/sandy5544/InstaPatch/releases/tag/v1.2.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
 <details open>
-<summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
+<summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
 <br>
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Disable DM pull-to-refresh](#disable-dm-pull-to-refresh) | Disables pull-to-refresh in the Instagram Direct inbox without disabling refresh elsewhere. |  |
-| [Show Follows You in followers/following](#show-follows-you-in-followers-following) | Shows a Follows you indicator next to users who follow the logged-in account in followers and following lists. |  |
 
 </details>
 
