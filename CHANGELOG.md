@@ -1,3 +1,11 @@
+## [1.4.2](https://github.com/sandy5544/InstaPatch/compare/v1.4.1...v1.4.2) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* add ephemeral media runtime helper ([7cd70c8](https://github.com/sandy5544/InstaPatch/commit/7cd70c8e0e275eb9514ed93935229f7405ca3951))
+* preserve ephemeral media metadata when making replayable ([82a8bde](https://github.com/sandy5544/InstaPatch/commit/82a8bde987fb5e49d62e1b64a8bd4260771f8c50))
+* remove unavailable fieldExtractor from anti view once patch ([3266910](https://github.com/sandy5544/InstaPatch/commit/3266910b7bcd4378edd7f8f13ce4d794dcd3f832))
+
 ## [1.4.1](https://github.com/sandy5544/InstaPatch/compare/v1.4.0...v1.4.1) (2026-09-14)
 
 ### 🐛 Bug Fixes
