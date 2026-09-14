@@ -8,9 +8,9 @@ This repository contains patches I made for some apps I care about.
 ## ⚙️ Patch Details
 
 <!-- PATCHES_START -->
-> **[v2.8.2](https://github.com/brosssh/morphe-patches/releases/tag/v2.8.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;22 patches total
+> **[v1.0.0](https://github.com/sandy5544/InstaPatch/releases/tag/v1.0.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;23 patches total
 <details>
-<summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;18 patches</summary>
+<summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;19 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -22,6 +22,7 @@ This repository contains patches I made for some apps I care about.
 |----------|----------------|-----------|
 | [Bypass signature check](#bypass-signature-check) |  |  |
 | [Clone](#clone) | Changes the package name and the app name. This allows you to install the patched app alongside the original Instagram app.<br>Caution: Do not select the official Morphe's "Change package name" universal patch. | • Package name<br>• App name |
+| [Disable DM pull-to-refresh](#disable-dm-pull-to-refresh) | Disables pull-to-refresh in the Instagram Direct inbox without disabling refresh elsewhere. |  |
 | [Disable Reels scrolling](#disable-reels-scrolling) | Disables the endless scrolling behavior in Instagram Reels, preventing swiping to the next Reel. Note: On a clean install, the 'Tip' animation may appear but will stop on its own after a few seconds. |  |
 | [Disable story auto flipping](#disable-story-auto-flipping) | Disable stories automatically flipping/skipping after some seconds. |  |
 | [Disable video autoplay](#disable-video-autoplay) | Disable video autoplay from feed |  |
