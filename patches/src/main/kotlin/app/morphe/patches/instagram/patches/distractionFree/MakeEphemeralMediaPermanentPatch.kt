@@ -10,6 +10,8 @@ import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
 import app.morphe.util.indexOfFirstInstruction
 import app.morphe.util.registersUsed
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
 private object EphemeralMediaJsonParserFingerprint : Fingerprint(
     custom = { methodDef, _ ->
@@ -35,15 +37,17 @@ val antiViewOnceMediaPatch = bytecodePatch(
             method.apply {
                 val viewModePut = getInstruction(
                     indexOfFirstInstruction(viewModeStringIndex, Opcode.IPUT_OBJECT),
-                )
-                val viewModeField = viewModePut.fieldExtractor()
+                ) as ReferenceInstruction
+                val viewModeField = viewModePut.reference as FieldReference
                 val mediaClass = viewModeField.definingClass
                 val viewModeFieldName = viewModeField.name
 
-                val expireAtField = instructions.last {
-                    it.location.index < viewModeStringIndex && it.opcode == Opcode.IPUT_OBJECT &&
+                val expireAtPut = instructions.last {
+                    it.location.index < viewModeStringIndex &&
+                        it.opcode == Opcode.IPUT_OBJECT &&
                         it.location.index >= expireAtStringIndex
-                }.fieldExtractor()
+                } as ReferenceInstruction
+                val expireAtField = expireAtPut.reference as FieldReference
                 val expireAtFieldName = expireAtField.name
 
                 val returnObject = instructions.last { it.opcode == Opcode.RETURN_OBJECT }
@@ -60,7 +64,7 @@ val antiViewOnceMediaPatch = bytecodePatch(
                     if-ne v$registerA, v$registerB, :morphe_ephemeral_continue
                     iget-object v0, v$mediaRegister, $mediaClass->$expireAtFieldName:Ljava/lang/Long;
                     iget-object v1, v$mediaRegister, $mediaClass->$viewModeFieldName:Ljava/lang/String;
-                    invoke-static {v0, v1}, Lapp/morphe/extension/instagram/patches/dm/EphemeralMediaPatch;->makeEphemeralMediaPermanent(Ljava/lang/Long;Ljava/lang/String;)Ljava/lang/String;
+                    invoke-static {v0, v1}, Lapp.morphe.extension.instagram.patches.dm.EphemeralMediaPatch;->makeEphemeralMediaPermanent(Ljava/lang/Long;Ljava/lang/String;)Ljava/lang/String;
                     move-result-object v1
                     iput-object v1, v$mediaRegister, $mediaClass->$viewModeFieldName:Ljava/lang/String;
                     return-object v$mediaRegister
