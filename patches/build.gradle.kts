@@ -1,13 +1,13 @@
-group = "app.brosssh"
+group = "app.instapatch"
 
 patches {
     about {
-        name = "Brosssh Patches"
-        description = "Brosssh Patches"
-        source = "git@github.com:brosssh/morphe-patches.git"
-        author = "brosssh"
+        name = "InstaPatch"
+        description = "Instagram DM pull-to-refresh patch"
+        source = "git@github.com:sandy5544/InstaPatch.git"
+        author = "sandy5544"
         contact = ""
-        website = "https://github.com/Brosssh"
+        website = "https://github.com/sandy5544/InstaPatch"
         license = "GNU General Public License v3.0"
     }
 }
