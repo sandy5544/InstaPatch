@@ -6,21 +6,25 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.Constants.COMPATIBILITY_INSTAGRAM
 
 /**
- * Locates the Instagram user-list row binder. The row reads the user's
- * relationship state and the display-name string before updating its
- * TextView.
+ * Locates Instagram's DirectUserRowViewBinder bindView method through its
+ * stable diagnostic string and the relationship check used by the row.
+ * The row keeps the User in v8 and the display-name CharSequence in v10
+ * immediately before the target TextView.setText(v9, v10) call.
  */
 private object UserListRowBindFingerprint : Fingerprint(
-    parameters = listOf("LX/03Tj;", "I"),
+    strings = listOf("DirectUserRowViewBinder - Follow button status unknown"),
+    name = "bindView",
+    parameters = listOf(
+        "I",
+        "Landroid/view/View;",
+        "Ljava/lang/Object;",
+        "Ljava/lang/Object;"
+    ),
     returnType = "V",
     filters = listOf(
         app.morphe.patcher.methodCall(
             definingClass = "Lcom/instagram/user/model/UserExtKt;",
             name = "A0V"
-        ),
-        app.morphe.patcher.methodCall(
-            definingClass = "Lcom/instagram/user/model/LiveTreeUserDict;",
-            name = "C8Z"
         ),
         app.morphe.patcher.methodCall(
             definingClass = "Landroid/widget/TextView;",
@@ -38,25 +42,14 @@ val showFollowsYouPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_INSTAGRAM)
 
     execute {
-        // The row keeps the User object in v1. Re-read the relationship at the
-        // point where the display name is ready, then append the indicator to
-        // that same TextView so it stays on the undername line.
-        val setTextIndex = UserListRowBindFingerprint.instructionMatches[2].index
+        // The first TextView.setText call is the user display-name row update.
+        // At this point v8 is the User and v10 is the display-name text.
+        val setTextIndex = UserListRowBindFingerprint.instructionMatches[1].index
         UserListRowBindFingerprint.method.addInstructions(
             setTextIndex,
             """
-                invoke-static {v1}, Lcom/instagram/user/model/UserExtKt;->A0V(Lcom/instagram/user/model/User;)Z
-                move-result v31
-                if-eqz v31, :skip_follows_you_indicator
-
-                new-instance v29, Ljava/lang/StringBuilder;
-                invoke-direct {v29, v8}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
-                const-string v30, " • Follows you"
-                invoke-virtual {v29, v30}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-                invoke-virtual {v29}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
-                move-result-object v8
-
-                :skip_follows_you_indicator
+                invoke-static {v8, v10}, Lapp/morphe/extension/instagram/patches/userlist/FollowsYouIndicator;->append(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/String;
+                move-result-object v10
             """
         )
     }
