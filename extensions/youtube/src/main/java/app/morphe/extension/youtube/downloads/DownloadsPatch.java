@@ -54,7 +54,7 @@ public final class DownloadsPatch {
     public static boolean onDownloadRequested(String videoId) {
         if (!isVideoId(videoId)) return false;
 
-        EXECUTOR.execute(() -> download(videoId));
+        EXECUTOR.execute(() -> AdvancedDownloads.download(videoId));
         Utils.showToastShort("Morphe: YouTube download started");
         return true;
     }
