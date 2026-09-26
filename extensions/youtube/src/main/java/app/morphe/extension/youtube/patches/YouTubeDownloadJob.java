@@ -7,8 +7,12 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -19,26 +23,12 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import app.morphe.extension.shared.Logger;
-import app.morphe.extension.shared.innertube.PlayerResponseOuterClass.Format;
-import app.morphe.extension.shared.innertube.PlayerResponseOuterClass.PlayerResponse;
-import app.morphe.extension.shared.spoof.ClientType;
-import app.morphe.extension.shared.spoof.SpoofVideoStreamsPatch;
-import app.morphe.extension.shared.spoof.requests.StreamingDataRequest;
+import app.morphe.extension.shared.Utils;
 
-/**
- * One native in-app download job.
- *
- * Stream resolution deliberately goes through Morphe's shared resolver so
- * configured spoof clients, PoToken handling and JavaScript deobfuscation are
- * reused instead of maintaining a second InnerTube implementation.
- *
- * Only direct, unprotected MP4 video/audio is written. Ciphered or DRM media
- * is not decrypted or bypassed.
- */
 final class YouTubeDownloadJob {
     interface Progress {
         void update(int percent, String text);
@@ -48,21 +38,11 @@ final class YouTubeDownloadJob {
     private static final int READ_TIMEOUT_MS = 30_000;
     private static final int BUFFER_SIZE = 64 * 1024;
 
-    private static final List<ClientType> DOWNLOAD_CLIENTS = List.of(
-            ClientType.TV_SIMPLY,
-            ClientType.VISIONOS_1_02,
-            ClientType.ANDROID_CREATOR
-    );
-
     private YouTubeDownloadJob() {
     }
 
-    static void run(
-            Context context,
-            String videoId,
-            Progress progress
-    ) throws Exception {
-        Selection selection = resolve(videoId);
+    static void run(Context context, String videoId, Progress progress) throws Exception {
+        Selection selection = resolve(context, videoId);
         if (selection == null) {
             throw new UnsupportedOperationException(
                     "No direct unprotected MP4 stream is available");
@@ -83,49 +63,27 @@ final class YouTubeDownloadJob {
                 }
 
                 long bytes = downloadToUri(
-                        context,
-                        selection.progressiveUrl,
-                        selection.progressiveLength,
-                        destination,
-                        progress,
-                        0,
-                        95
-                );
+                        context, selection.progressiveUrl,
+                        selection.progressiveLength, destination, progress, 0, 95);
 
                 publish(context, destination);
                 destination = null;
                 progress.update(100, formatSize(bytes) + " • Download complete");
-                UtilsToast.success();
+                successToast();
                 return;
             }
 
             videoFile = new File(
                     context.getCacheDir(),
-                    "morphe_yt_video_" + System.nanoTime() + ".mp4"
-            );
+                    "morphe_yt_video_" + System.nanoTime() + ".mp4");
             audioFile = new File(
                     context.getCacheDir(),
-                    "morphe_yt_audio_" + System.nanoTime() + ".m4a"
-            );
+                    "morphe_yt_audio_" + System.nanoTime() + ".m4a");
 
-            downloadToFile(
-                    context,
-                    selection.videoUrl,
-                    selection.videoLength,
-                    videoFile,
-                    progress,
-                    5,
-                    55
-            );
-            downloadToFile(
-                    context,
-                    selection.audioUrl,
-                    selection.audioLength,
-                    audioFile,
-                    progress,
-                    55,
-                    85
-            );
+            downloadToFile(context, selection.videoUrl, selection.videoLength,
+                    videoFile, progress, 5, 55);
+            downloadToFile(context, selection.audioUrl, selection.audioLength,
+                    audioFile, progress, 55, 85);
 
             destination = createDestination(context, title + ".mp4");
             if (destination == null) {
@@ -138,78 +96,62 @@ final class YouTubeDownloadJob {
             publish(context, destination);
             destination = null;
             progress.update(100, "Download complete");
-            UtilsToast.success();
+            successToast();
         } finally {
-            if (destination != null) {
-                deleteDestination(context, destination);
-            }
+            if (destination != null) deleteDestination(context, destination);
             deleteQuietly(videoFile);
             deleteQuietly(audioFile);
         }
     }
 
-    private static Selection resolve(String videoId) throws Exception {
-        StreamingDataRequest request =
-                StreamingDataRequest.fetchRequestForDownload(
-                        videoId,
-                        DOWNLOAD_CLIENTS,
-                        SpoofVideoStreamsPatch.getPreferredClient()
-                );
+    private static Selection resolve(Context context, String videoId) throws Exception {
+        JSONObject root = new JSONObject(requestPlayer(context, videoId));
+        JSONObject details = root.optJSONObject("videoDetails");
+        JSONObject streaming = root.optJSONObject("streamingData");
+        if (streaming == null) return null;
 
-        if (request == null) return null;
+        String title = details == null
+                ? videoId
+                : details.optString("title", videoId);
 
-        StreamingDataRequest.StreamData stream = request.getStream();
-        if (stream == null || stream.streamingData() == null) return null;
-
-        PlayerResponse response =
-                PlayerResponse.parseFrom(stream.streamingData());
-
-        String title = response.hasVideoDetails()
-                && !response.getVideoDetails().getTitle().isBlank()
-                ? response.getVideoDetails().getTitle()
-                : videoId;
-
-        var streaming = response.getStreamingData();
-
-        Format progressive = bestProgressive(streaming.getFormatsList());
-        if (progressive != null && !progressive.getUrl().isBlank()) {
+        JSONObject progressive = bestProgressive(
+                streaming.optJSONArray("formats"));
+        if (progressive != null) {
             return Selection.progressive(
                     title,
-                    progressive.getUrl(),
-                    progressive.getContentLength()
-            );
+                    progressive.optString("url", ""),
+                    progressive.optLong("contentLength", -1));
         }
 
-        Format video = bestVideo(streaming.getAdaptiveFormatsList());
-        Format audio = bestAudio(streaming.getAdaptiveFormatsList());
+        JSONObject video = bestVideo(
+                streaming.optJSONArray("adaptiveFormats"));
+        JSONObject audio = bestAudio(
+                streaming.optJSONArray("adaptiveFormats"));
 
-        if (video == null || audio == null
-                || video.getUrl().isBlank()
-                || audio.getUrl().isBlank()) {
-            return null;
-        }
+        if (video == null || audio == null) return null;
 
         return Selection.adaptive(
                 title,
-                video.getUrl(),
-                video.getContentLength(),
-                audio.getUrl(),
-                audio.getContentLength()
-        );
+                video.optString("url", ""),
+                video.optLong("contentLength", -1),
+                audio.optString("url", ""),
+                audio.optLong("contentLength", -1));
     }
 
-    private static Format bestProgressive(List<Format> formats) {
-        Format best = null;
+    private static JSONObject bestProgressive(JSONArray formats) {
+        if (formats == null) return null;
+        JSONObject best = null;
         int bestHeight = -1;
         int bestFps = -1;
         long bestBitrate = -1;
 
-        for (Format format : formats) {
+        for (int i = 0; i < formats.length(); i++) {
+            JSONObject format = formats.optJSONObject(i);
             if (!isDirectMp4Video(format)) continue;
 
-            int height = format.getHeight();
-            int fps = format.getFps();
-            long bitrate = format.getBitrate();
+            int height = format.optInt("height", 0);
+            int fps = format.optInt("fps", 0);
+            long bitrate = format.optLong("bitrate", 0);
 
             if (height > bestHeight
                     || (height == bestHeight && fps > bestFps)
@@ -224,18 +166,20 @@ final class YouTubeDownloadJob {
         return best;
     }
 
-    private static Format bestVideo(List<Format> formats) {
+    private static JSONObject bestVideo(JSONArray formats) {
         return bestProgressive(formats);
     }
 
-    private static Format bestAudio(List<Format> formats) {
-        Format best = null;
+    private static JSONObject bestAudio(JSONArray formats) {
+        if (formats == null) return null;
+        JSONObject best = null;
         long bestBitrate = -1;
 
-        for (Format format : formats) {
+        for (int i = 0; i < formats.length(); i++) {
+            JSONObject format = formats.optJSONObject(i);
             if (!isDirectMp4Audio(format)) continue;
 
-            long bitrate = format.getBitrate();
+            long bitrate = format.optLong("bitrate", 0);
             if (bitrate > bestBitrate) {
                 best = format;
                 bestBitrate = bitrate;
@@ -244,14 +188,15 @@ final class YouTubeDownloadJob {
         return best;
     }
 
-    private static boolean isDirectMp4Video(Format format) {
-        if (format == null
-                || format.getUrl().isBlank()
-                || !format.getMimeType().startsWith("video/mp4")) {
-            return false;
-        }
+    private static boolean isDirectMp4Video(JSONObject format) {
+        if (format == null) return false;
+        String url = format.optString("url", "");
+        String mime = format.optString("mimeType", "");
+        if (url.isEmpty() || !mime.startsWith("video/mp4")) return false;
+        if (format.has("signatureCipher") || format.has("cipher")
+                || format.has("drmFamilies")) return false;
 
-        String codecs = mimeCodecs(format.getMimeType());
+        String codecs = mimeCodecs(mime);
         return codecs.isEmpty()
                 || codecs.contains("avc1")
                 || codecs.contains("av01")
@@ -259,14 +204,15 @@ final class YouTubeDownloadJob {
                 || codecs.contains("hvc1");
     }
 
-    private static boolean isDirectMp4Audio(Format format) {
-        if (format == null
-                || format.getUrl().isBlank()
-                || !format.getMimeType().startsWith("audio/mp4")) {
-            return false;
-        }
+    private static boolean isDirectMp4Audio(JSONObject format) {
+        if (format == null) return false;
+        String url = format.optString("url", "");
+        String mime = format.optString("mimeType", "");
+        if (url.isEmpty() || !mime.startsWith("audio/mp4")) return false;
+        if (format.has("signatureCipher") || format.has("cipher")
+                || format.has("drmFamilies")) return false;
 
-        String codecs = mimeCodecs(format.getMimeType());
+        String codecs = mimeCodecs(mime);
         return codecs.isEmpty() || codecs.contains("mp4a");
     }
 
@@ -278,27 +224,63 @@ final class YouTubeDownloadJob {
         return end > start ? mime.substring(start, end) : "";
     }
 
-    private static HttpURLConnection openConnection(String streamUrl)
-            throws Exception {
-        HttpURLConnection connection =
-                (HttpURLConnection) new URL(streamUrl).openConnection();
+    private static String requestPlayer(Context context, String videoId) throws Exception {
+        URL url = new URL(
+                "https://youtubei.googleapis.com/youtubei/v1/player"
+                        + "?alt=json&prettyPrint=false");
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
         connection.setReadTimeout(READ_TIMEOUT_MS);
-        connection.setInstanceFollowRedirects(true);
-        connection.setRequestProperty("Accept", "*/*");
-        connection.setRequestProperty("Accept-Encoding", "identity");
-        return connection;
+        connection.setRequestMethod("POST");
+        connection.setDoOutput(true);
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("X-YouTube-Client-Name", "3");
+        connection.setRequestProperty(
+                "X-YouTube-Client-Version", getYouTubeVersion(context));
+
+        JSONObject client = new JSONObject()
+                .put("clientName", "ANDROID")
+                .put("clientVersion", getYouTubeVersion(context))
+                .put("androidSdkVersion", Build.VERSION.SDK_INT)
+                .put("hl", Locale.getDefault().toLanguageTag());
+
+        JSONObject body = new JSONObject()
+                .put("videoId", videoId)
+                .put("contentCheckOk", true)
+                .put("racyCheckOk", true)
+                .put("context", new JSONObject().put("client", client));
+
+        try {
+            byte[] request = body.toString().getBytes(StandardCharsets.UTF_8);
+            try (OutputStream output = connection.getOutputStream()) {
+                output.write(request);
+            }
+
+            int code = connection.getResponseCode();
+            if (code < 200 || code >= 300) {
+                throw new IllegalStateException("Player request HTTP " + code);
+            }
+
+            try (InputStream input = connection.getInputStream();
+                 java.io.ByteArrayOutputStream output =
+                         new java.io.ByteArrayOutputStream()) {
+                byte[] buffer = new byte[16 * 1024];
+                int read;
+                while ((read = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, read);
+                }
+                return output.toString(StandardCharsets.UTF_8.name());
+            }
+        } finally {
+            connection.disconnect();
+        }
     }
 
     private static long downloadToUri(
-            Context context,
-            String url,
-            long expectedLength,
-            Uri destination,
-            Progress progress,
-            int start,
-            int end
-    ) throws Exception {
+            Context context, String url, long expectedLength, Uri destination,
+            Progress progress, int start, int end) throws Exception {
         HttpURLConnection connection = openConnection(url);
         try {
             checkResponse(connection);
@@ -309,10 +291,10 @@ final class YouTubeDownloadJob {
                          connection.getInputStream(), BUFFER_SIZE);
                  OutputStream raw = context.getContentResolver()
                          .openOutputStream(destination, "w")) {
-                if (raw == null) {
-                    throw new IllegalStateException("Output stream unavailable");
-                }
-                return copy(input, new BufferedOutputStream(raw, BUFFER_SIZE),
+                if (raw == null) throw new IllegalStateException(
+                        "Output stream unavailable");
+                return copy(input,
+                        new BufferedOutputStream(raw, BUFFER_SIZE),
                         length, progress, start, end);
             }
         } finally {
@@ -321,14 +303,8 @@ final class YouTubeDownloadJob {
     }
 
     private static void downloadToFile(
-            Context context,
-            String url,
-            long expectedLength,
-            File destination,
-            Progress progress,
-            int start,
-            int end
-    ) throws Exception {
+            Context context, String url, long expectedLength, File destination,
+            Progress progress, int start, int end) throws Exception {
         HttpURLConnection connection = openConnection(url);
         try {
             checkResponse(connection);
@@ -346,6 +322,18 @@ final class YouTubeDownloadJob {
         }
     }
 
+    private static HttpURLConnection openConnection(String streamUrl)
+            throws Exception {
+        HttpURLConnection connection =
+                (HttpURLConnection) new URL(streamUrl).openConnection();
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        connection.setReadTimeout(READ_TIMEOUT_MS);
+        connection.setInstanceFollowRedirects(true);
+        connection.setRequestProperty("Accept", "*/*");
+        connection.setRequestProperty("Accept-Encoding", "identity");
+        return connection;
+    }
+
     private static void checkResponse(HttpURLConnection connection)
             throws Exception {
         int code = connection.getResponseCode();
@@ -355,13 +343,8 @@ final class YouTubeDownloadJob {
     }
 
     private static long copy(
-            InputStream input,
-            OutputStream output,
-            long length,
-            Progress progress,
-            int start,
-            int end
-    ) throws Exception {
+            InputStream input, OutputStream output, long length,
+            Progress progress, int start, int end) throws Exception {
         try (OutputStream out = output) {
             byte[] buffer = new byte[BUFFER_SIZE];
             long copied = 0;
@@ -377,8 +360,7 @@ final class YouTubeDownloadJob {
                     int percent = length > 0
                             ? start + (int) Math.min(
                                     end - start - 1,
-                                    copied * (end - start) / length
-                            )
+                                    copied * (end - start) / length)
                             : -1;
                     progress.update(percent, "Downloading");
                     lastUpdate = now;
@@ -393,19 +375,16 @@ final class YouTubeDownloadJob {
         values.put(MediaStore.Video.Media.DISPLAY_NAME, name);
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
 
-        if (BuildCompat.isAtLeastQ()) {
+        if (Build.VERSION.SDK_INT >= 29) {
             values.put(
                     MediaStore.Video.Media.RELATIVE_PATH,
-                    Environment.DIRECTORY_MOVIES + "/Morphe YouTube"
-            );
+                    Environment.DIRECTORY_MOVIES + "/Morphe YouTube");
             values.put(MediaStore.Video.Media.IS_PENDING, 1);
         }
 
         try {
             return context.getContentResolver().insert(
-                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                    values
-            );
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
         } catch (Throwable ex) {
             Logger.printException(() -> "MediaStore insert failed", ex);
             return null;
@@ -413,7 +392,7 @@ final class YouTubeDownloadJob {
     }
 
     private static void publish(Context context, Uri destination) {
-        if (!BuildCompat.isAtLeastQ()) return;
+        if (Build.VERSION.SDK_INT < 29) return;
 
         ContentValues values = new ContentValues();
         values.put(MediaStore.Video.Media.IS_PENDING, 0);
@@ -434,11 +413,8 @@ final class YouTubeDownloadJob {
     }
 
     private static void muxMp4(
-            Context context,
-            File videoFile,
-            File audioFile,
-            Uri destination
-    ) throws Exception {
+            Context context, File videoFile, File audioFile, Uri destination)
+            throws Exception {
         MediaExtractor videoExtractor = new MediaExtractor();
         MediaExtractor audioExtractor = new MediaExtractor();
         android.os.ParcelFileDescriptor pfd = null;
@@ -466,14 +442,12 @@ final class YouTubeDownloadJob {
 
             pfd = context.getContentResolver()
                     .openFileDescriptor(destination, "w");
-            if (pfd == null) {
-                throw new IllegalStateException("Could not open output");
-            }
+            if (pfd == null) throw new IllegalStateException(
+                    "Could not open MediaStore output");
 
             muxer = new MediaMuxer(
                     pfd.getFileDescriptor(),
-                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4
-            );
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 
             int outVideo = muxer.addTrack(videoFormat);
             int outAudio = muxer.addTrack(audioFormat);
@@ -510,10 +484,7 @@ final class YouTubeDownloadJob {
     }
 
     private static void copyTrack(
-            MediaExtractor extractor,
-            MediaMuxer muxer,
-            int outputTrack
-    ) {
+            MediaExtractor extractor, MediaMuxer muxer, int outputTrack) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
 
@@ -531,6 +502,21 @@ final class YouTubeDownloadJob {
             extractor.advance();
             buffer.clear();
         }
+    }
+
+    private static String getYouTubeVersion(Context context) {
+        try {
+            android.content.pm.PackageInfo info =
+                    context.getPackageManager().getPackageInfo(
+                            "com.google.android.youtube", 0);
+            if (info.versionName != null && !info.versionName.isEmpty()) {
+                return info.versionName;
+            }
+        } catch (Throwable ex) {
+            Logger.printDebug(() ->
+                    "Could not read YouTube version: " + ex);
+        }
+        return "21.38.123";
     }
 
     private static String sanitize(String value) {
@@ -555,6 +541,15 @@ final class YouTubeDownloadJob {
                 bytes / (1024d * 1024d * 1024d));
     }
 
+    private static void successToast() {
+        try {
+            Utils.runOnMainThread(() ->
+                    Utils.showToastShort("Morphe: YouTube download complete"));
+        } catch (Throwable ex) {
+            Logger.printException(() -> "Download toast failed", ex);
+        }
+    }
+
     private static void deleteQuietly(File file) {
         if (file == null) return;
         try {
@@ -572,15 +567,9 @@ final class YouTubeDownloadJob {
         final String audioUrl;
         final long audioLength;
 
-        private Selection(
-                String title,
-                String progressiveUrl,
-                long progressiveLength,
-                String videoUrl,
-                long videoLength,
-                String audioUrl,
-                long audioLength
-        ) {
+        private Selection(String title, String progressiveUrl, long progressiveLength,
+                          String videoUrl, long videoLength,
+                          String audioUrl, long audioLength) {
             this.title = title;
             this.progressiveUrl = progressiveUrl;
             this.progressiveLength = progressiveLength;
@@ -590,40 +579,14 @@ final class YouTubeDownloadJob {
             this.audioLength = audioLength;
         }
 
-        static Selection progressive(
-                String title, String url, long length) {
-            return new Selection(
-                    title, url, length, null, -1, null, -1);
+        static Selection progressive(String title, String url, long length) {
+            return new Selection(title, url, length, null, -1, null, -1);
         }
 
-        static Selection adaptive(
-                String title,
-                String videoUrl,
-                long videoLength,
-                String audioUrl,
-                long audioLength
-        ) {
-            return new Selection(
-                    title, null, -1, videoUrl, videoLength,
+        static Selection adaptive(String title, String videoUrl, long videoLength,
+                                  String audioUrl, long audioLength) {
+            return new Selection(title, null, -1, videoUrl, videoLength,
                     audioUrl, audioLength);
-        }
-    }
-
-    private static final class BuildCompat {
-        static boolean isAtLeastQ() {
-            return android.os.Build.VERSION.SDK_INT >= 29;
-        }
-    }
-
-    private static final class UtilsToast {
-        static void success() {
-            try {
-                app.morphe.extension.shared.Utils.runOnMainThread(
-                        () -> app.morphe.extension.shared.Utils.showToastShort(
-                                "Morphe: YouTube download complete"));
-            } catch (Throwable ex) {
-                Logger.printException(() -> "Download toast failed", ex);
-            }
         }
     }
 }
