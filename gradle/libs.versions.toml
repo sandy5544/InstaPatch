@@ -1,6 +1,6 @@
 [versions]
-morphe-patcher = "1.10.0"
-morphe-patches-library = "1.6.2"
+morphe-patcher = "1.14.0"
+morphe-patches-library = "1.7.1"
 instagram-morphe-patches-library = "1.1.0"
 #noinspection GradleDependency
 smali = "d92701d947"
