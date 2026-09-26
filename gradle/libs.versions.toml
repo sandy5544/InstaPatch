@@ -1,6 +1,7 @@
 [versions]
 morphe-patcher = "1.14.0"
 morphe-patches-library = "1.7.1"
+youtubedl-android = "0.18.1"
 instagram-morphe-patches-library = "1.1.0"
 #noinspection GradleDependency
 smali = "d92701d947"
@@ -10,6 +11,8 @@ annotation = "1.9.1"
 [libraries]
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
+youtubedl-android-library = { module = "io.github.junkfood02.youtubedl-android:library", version.ref = "youtubedl-android" }
+youtubedl-android-ffmpeg = { module = "io.github.junkfood02.youtubedl-android:ffmpeg", version.ref = "youtubedl-android" }
 morphe-patches-library = { module = "app.morphe:morphe-patches-library", version.ref = "morphe-patches-library" }
 morphe-extensions-library = { module = "app.morphe:morphe-extensions-library", version.ref = "morphe-patches-library" }
 instagram-morphe-patches-library = { module = "app.morphe:instagram-morphe-patches-library", version.ref = "instagram-morphe-patches-library" }
