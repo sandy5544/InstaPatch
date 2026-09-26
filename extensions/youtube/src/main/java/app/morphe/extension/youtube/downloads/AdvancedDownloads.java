@@ -42,7 +42,7 @@ final class AdvancedDownloads {
 
     private AdvancedDownloads() {}
 
-    static void download(String videoId) {
+    static boolean download(String videoId) {
         Context context = Utils.getContext();
         File video = null;
         File audio = null;
@@ -52,7 +52,11 @@ final class AdvancedDownloads {
         try {
             Result r = resolve(videoId, context);
             if (r == null) {
-                throw new IllegalStateException("No direct unprotected MP4 stream");
+                // Keep YouTube's native offline path for ciphered, protected,
+                // entitlement-gated, or otherwise non-direct streams. This is
+                // also the path that can use YouTube-authorized DRM licenses.
+                Logger.printDebug(() -> "YouTube stream is not directly downloadable; keeping native offline path");
+                return false;
             }
 
             File dir = new File(context.getCacheDir(), "morphe-youtube");
@@ -86,6 +90,7 @@ final class AdvancedDownloads {
             context.getContentResolver().update(destination, values, null, null);
 
             Utils.showToastShort("Morphe: YouTube download complete");
+            return true;
         } catch (Exception e) {
             if (destination != null) {
                 try {
@@ -94,8 +99,9 @@ final class AdvancedDownloads {
             }
             Logger.printException(() -> "YouTube adaptive download failed", e);
             Utils.showToastShort(
-                "Morphe: direct download unavailable; YouTube protected/offline download remains native"
+                "Morphe: direct download failed; YouTube offline download remains native"
             );
+            return false;
         } finally {
             delete(video);
             delete(audio);
