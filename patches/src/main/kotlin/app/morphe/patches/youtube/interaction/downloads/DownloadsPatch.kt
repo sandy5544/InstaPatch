@@ -1,33 +1,54 @@
 package app.morphe.patches.youtube.interaction.downloads
 
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patches.Constants.COMPATIBILITY_YOUTUBE
+import app.morphe.patches.youtube.misc.playercontrols.addTopControl
+import app.morphe.patches.youtube.misc.playercontrols.initializeTopControl
+import app.morphe.patches.youtube.misc.playercontrols.legacyPlayerControlsPatch
+import app.morphe.util.ResourceGroup
+import app.morphe.util.copyResources
 
-private const val EXTENSION_CLASS =
-    "Lapp/morphe/extension/youtube/downloads/DownloadsPatch;"
+private val downloadsResourcePatch = resourcePatch {
+    dependsOn(legacyPlayerControlsPatch)
+
+    execute {
+        copyResources(
+            "downloads",
+            ResourceGroup(
+                "drawable",
+                "morphe_yt_download_button.xml",
+                "morphe_yt_download_button_bold.xml",
+            )
+        )
+    }
+
+    finalize {
+        addTopControl(
+            "downloads",
+            "@+id/morphe_external_download_button",
+            "@+id/morphe_external_download_button"
+        )
+    }
+}
+
+private const val EXTENSION_BUTTON =
+    "Lapp/morphe/extension/youtube/videoplayer/ExternalDownloadButton;"
 
 @Suppress("unused")
 val youtubeInAppDownloadsPatch = bytecodePatch(
     name = "YouTube In-App Downloads",
-    description = "Adds an experimental in-app download action using a background direct MP4 downloader. " +
-        "Protected, ciphered, and entitlement-gated streams are not handled by the custom downloader."
+    description = "Adds a safe in-app MP4 download button. " +
+        "Native YouTube downloads remain untouched for protected or unsupported streams.",
 ) {
+    dependsOn(
+        downloadsResourcePatch,
+        legacyPlayerControlsPatch,
+    )
+
     compatibleWith(COMPATIBILITY_YOUTUBE)
 
     execute {
-        OfflineVideoEndpointFingerprint.method.apply {
-            addInstructionsWithLabels(
-                0,
-                """
-                    invoke-static/range { p3 .. p3 }, $EXTENSION_CLASS->onDownloadRequested(Ljava/lang/String;)Z
-                    move-result v0
-                    if-eqz v0, :continue_native_download
-                    return-void
-                    :continue_native_download
-                    nop
-                """
-            )
-        }
+        initializeTopControl(EXTENSION_BUTTON)
     }
 }
