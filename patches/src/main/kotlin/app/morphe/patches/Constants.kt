@@ -11,6 +11,12 @@ object Constants {
         targets = listOf(AppTarget(version = null))
     )
 
+    val COMPATIBILITY_YOUTUBE = Compatibility(
+        name = "YouTube",
+        packageName = "com.google.android.youtube",
+        targets = listOf(AppTarget(version = "21.16.256"))
+    )
+
     val COMPATIBILITY_CHARGEPRICE = Compatibility(
         name = "Chargeprice",
         packageName = "fr.chargeprice.app",
