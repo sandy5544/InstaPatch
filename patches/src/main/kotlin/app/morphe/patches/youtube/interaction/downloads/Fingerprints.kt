@@ -11,7 +11,7 @@ internal object OfflineVideoEndpointFingerprint : Fingerprint(
     parameters = listOf(
         "Ljava/util/Map;",
         "L",
-        "Ljava/lang/String",
+        "Ljava/lang/String;",
         "L",
     ),
     filters = listOf(
