@@ -20,7 +20,7 @@ val youtubeInAppDownloadsPatch = bytecodePatch(
             addInstructionsWithLabels(
                 0,
                 """
-                    invoke-static { p3 }, $EXTENSION_CLASS->onDownloadRequested(Ljava/lang/Object;)V
+                    invoke-static/range { p3 .. p3 }, $EXTENSION_CLASS->onDownloadRequested(Ljava/lang/Object;)V
                 """
             )
         }
