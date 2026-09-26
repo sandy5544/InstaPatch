@@ -31,8 +31,9 @@ import app.morphe.extension.shared.Utils;
 /**
  * Local YouTube downloader used by the Morphe in-app download hook.
  *
- * This intentionally accepts only direct progressive MP4 URLs returned by InnerTube.
- * It does not decipher ciphered URLs and does not handle DRM/protected formats.
+ * Direct downloads use unprotected URLs returned by InnerTube. Ciphered and
+ * DRM/protected streams are left to YouTube's native offline path, preserving
+ * YouTube-authorized license handling rather than attempting to extract keys.
  */
 @SuppressWarnings("unused")
 public final class DownloadsPatch {
@@ -53,6 +54,11 @@ public final class DownloadsPatch {
 
     public static boolean onDownloadRequested(String videoId) {
         if (!isVideoId(videoId)) return false;
+
+        // Preflight before suppressing YouTube's native endpoint. Protected,
+        // ciphered, entitlement-gated, or otherwise unsupported streams return
+        // false so YouTube can use its own authorized offline/DRM implementation.
+        if (!AdvancedDownloads.canHandle(videoId)) return false;
 
         EXECUTOR.execute(() -> AdvancedDownloads.download(videoId));
         Utils.showToastShort("Morphe: YouTube download started");
