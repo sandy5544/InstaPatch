@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/sandy5544/InstaPatch/compare/v1.9.0...v1.9.1) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* align Morphe dependencies for YouTube 21.38.123 ([b0a6d14](https://github.com/sandy5544/InstaPatch/commit/b0a6d140e66f63263727f7e44cecfc0c30a269b8))
+* align Morphe libraries for YouTube 21.38.123 ([6ec6eb7](https://github.com/sandy5544/InstaPatch/commit/6ec6eb7a5f53fcd4cc787b0ce036c659c4498507))
+
 ## [1.9.0](https://github.com/sandy5544/InstaPatch/compare/v1.8.5...v1.9.0) (2026-09-26)
 
 ### ✨ New Features
