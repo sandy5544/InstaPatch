@@ -1,3 +1,16 @@
+## [1.10.0](https://github.com/sandy5544/InstaPatch/compare/v1.9.1...v1.10.0) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* keep downloader initialization exception-safe ([9656fed](https://github.com/sandy5544/InstaPatch/commit/9656fed75feace87d02cebfda64bbb125812c007))
+* package embedded downloader native libraries ([f774068](https://github.com/sandy5544/InstaPatch/commit/f774068d5f9e17427f3c15737f26a775628e6c2e))
+
+### ✨ New Features
+
+* add embedded yt-dlp downloader dependencies ([168a076](https://github.com/sandy5544/InstaPatch/commit/168a076837501d1571c4648423aa1eb88c611ca8))
+* package yt-dlp and ffmpeg in YouTube extension ([ed915f1](https://github.com/sandy5544/InstaPatch/commit/ed915f1b97e9d5bb90ec7e4a394bce4292bc7a74))
+* replace custom resolver with embedded yt-dlp engine ([bb88b26](https://github.com/sandy5544/InstaPatch/commit/bb88b261bec150f8dc001c5bf1ab11f20a3f5601))
+
 ## [1.9.1](https://github.com/sandy5544/InstaPatch/compare/v1.9.0...v1.9.1) (2026-09-26)
 
 ### 🐛 Bug Fixes
