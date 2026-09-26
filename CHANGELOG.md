@@ -1,3 +1,9 @@
+## [1.6.0](https://github.com/sandy5544/InstaPatch/compare/v1.5.0...v1.6.0) (2026-09-26)
+
+### ✨ New Features
+
+* add experimental YouTube in-app downloads ([e1396a1](https://github.com/sandy5544/InstaPatch/commit/e1396a11a7c58dcbe00feab32ac6717140969d06))
+
 ## [1.5.0](https://github.com/sandy5544/InstaPatch/compare/v1.4.2...v1.5.0) (2026-09-14)
 
 ### ✨ New Features

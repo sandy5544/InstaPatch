@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-14T16:14:31",
-  "description": "## [1.5.0](https://github.com/sandy5544/InstaPatch/compare/v1.4.2...v1.5.0) (2026-09-14)\n\n### ✨ New Features\n\n* add PrimeMods premium enabler ([e0f32cd](https://github.com/sandy5544/InstaPatch/commit/e0f32cd849b23fdb481d66373166c87655dedaec))",
-  "download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.5.0/patches-1.5.0.mpp",
-  "signature_download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.5.0/patches-1.5.0.mpp.asc",
-  "version": "1.5.0"
+  "created_at": "2026-09-26T13:16:37",
+  "description": "## [1.6.0](https://github.com/sandy5544/InstaPatch/compare/v1.5.0...v1.6.0) (2026-09-26)\n\n### ✨ New Features\n\n* add experimental YouTube in-app downloads ([e1396a1](https://github.com/sandy5544/InstaPatch/commit/e1396a11a7c58dcbe00feab32ac6717140969d06))",
+  "download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.6.0/patches-1.6.0.mpp",
+  "signature_download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.6.0/patches-1.6.0.mpp.asc",
+  "version": "1.6.0"
 }
