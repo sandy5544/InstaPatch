@@ -180,6 +180,15 @@ public final class DownloadsPatch {
         return connection;
     }
 
+    private static String userAgent(Context context) {
+        return String.format(
+            Locale.US,
+            USER_AGENT_PREFIX,
+            getYouTubeVersion(context),
+            android.os.Build.VERSION.RELEASE
+        );
+    }
+
     private static PlayerResponse resolve(String videoId) throws Exception {
         JSONObject root = new JSONObject(requestPlayer(videoId));
         JSONObject details = root.optJSONObject("videoDetails");
