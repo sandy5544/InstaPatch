@@ -12,7 +12,7 @@ public final class DownloadsPatch {
     private DownloadsPatch() {
     }
 
-    public static boolean start(String videoId) {
+    public static boolean onDownloadRequested(String videoId) {
         if (!isVideoId(videoId)) {
             return false;
         }
@@ -39,6 +39,10 @@ public final class DownloadsPatch {
                     () -> "Could not start embedded YouTube downloader", ex);
             return false;
         }
+    }
+
+    public static boolean start(String videoId) {
+        return onDownloadRequested(videoId);
     }
 
     private static boolean isVideoId(String value) {
