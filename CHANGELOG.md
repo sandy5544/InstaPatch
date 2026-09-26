@@ -1,3 +1,9 @@
+## [1.7.0](https://github.com/sandy5544/InstaPatch/compare/v1.6.0...v1.7.0) (2026-09-26)
+
+### ✨ New Features
+
+* add adaptive YouTube video and audio downloads ([#2](https://github.com/sandy5544/InstaPatch/issues/2)) ([2abe9e1](https://github.com/sandy5544/InstaPatch/commit/2abe9e14faaaf6f06b49f82e33798f6225504b00))
+
 ## [1.6.0](https://github.com/sandy5544/InstaPatch/compare/v1.5.0...v1.6.0) (2026-09-26)
 
 ### ✨ New Features
