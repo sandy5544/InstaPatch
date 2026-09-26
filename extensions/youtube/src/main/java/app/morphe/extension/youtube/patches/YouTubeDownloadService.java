@@ -72,6 +72,17 @@ public final class YouTubeDownloadService extends Service {
         return START_NOT_STICKY;
     }
 
+    /*
+     * Android 15 limits dataSync foreground-service runtime. Stop promptly
+     * when the platform reports the timeout instead of allowing a process
+     * exception after the grace period.
+     */
+    public void onTimeout(int startId, int fgsType) {
+        Logger.printDebug(() ->
+                "YouTube download foreground-service timeout: " + fgsType);
+        stopSelf(startId);
+    }
+
     private boolean startForegroundSafely(String title) {
         try {
             Notification notification =
