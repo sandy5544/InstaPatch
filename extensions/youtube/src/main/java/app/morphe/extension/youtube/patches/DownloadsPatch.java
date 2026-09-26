@@ -806,7 +806,7 @@ public final class DownloadsPatch {
                 null
         );
         if (updated <= 0) {
-            Logger.printDebug(() ->
+            throw new IllegalStateException(
                     "MediaStore publish did not update target row");
         }
     }
@@ -908,18 +908,10 @@ public final class DownloadsPatch {
 
     private static String getYouTubeVersion(Context context) {
         try {
-            String packageName = context.getPackageName();
-            if (packageName == null
-                    || packageName.isEmpty()
-                    || (!"com.google.android.youtube".equals(packageName)
-                    && !"com.google.android.apps.youtube.music".equals(packageName))) {
-                packageName = "com.google.android.youtube";
-            }
-
             android.content.pm.PackageInfo info =
                     context.getPackageManager()
                             .getPackageInfo(
-                                    packageName,
+                                    "com.google.android.youtube",
                                     0
                             );
             if (info.versionName != null
