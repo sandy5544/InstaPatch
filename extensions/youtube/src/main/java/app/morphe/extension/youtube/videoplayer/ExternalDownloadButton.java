@@ -3,6 +3,7 @@ package app.morphe.extension.youtube.videoplayer;
 import android.view.View;
 
 import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.settings.SharedYouTubeSettings;
 import app.morphe.extension.youtube.patches.DownloadsPatch;
 import app.morphe.extension.youtube.patches.VideoInformation;
 
@@ -16,7 +17,7 @@ public final class ExternalDownloadButton {
                     "morphe_external_download_button",
                     null,
                     "morphe_yt_download_button",
-                    null,
+                    SharedYouTubeSettings.EXTERNAL_DOWNLOADER,
                     ExternalDownloadButton::onDownloadClick,
                     null
             );
