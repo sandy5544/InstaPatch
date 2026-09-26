@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 
 import com.yausername.ffmpeg.FFmpeg;
+import com.yausername.aria2c.Aria2c;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLRequest;
 
@@ -152,6 +153,7 @@ final class YouTubeDownloadJob {
             try {
                 YoutubeDL.getInstance().init(context.getApplicationContext());
                 FFmpeg.getInstance().init(context.getApplicationContext());
+                Aria2c.getInstance().init(context.getApplicationContext());
                 initialized = true;
             } catch (Exception ex) {
                 initialized = false;
@@ -181,6 +183,8 @@ final class YouTubeDownloadJob {
         request.addOption("--retry-sleep", "http:exp=1:120");
         request.addOption("--retry-sleep", "fragment:exp=1:60");
         request.addOption("--concurrent-fragments", "4");
+        request.addOption("--downloader", "libaria2c.so");
+        request.addOption("--downloader-args", "libaria2c.so:file-allocation=none:max-tries=5:retry-wait=2:console-log-level=warn");
         request.addOption("--extractor-args", extractorArgs);
         request.addOption("-f",
                 "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
