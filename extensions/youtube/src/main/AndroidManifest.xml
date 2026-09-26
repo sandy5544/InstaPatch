@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
-    <application>
+    <application android:extractNativeLibs="true">
         <service
             android:name=".patches.DownloadsPatch$YouTubeDownloadService"
             android:exported="false"
