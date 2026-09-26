@@ -1,3 +1,10 @@
+## [1.8.5](https://github.com/sandy5544/InstaPatch/compare/v1.8.4...v1.8.5) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* resolve Copilot MediaStore and package review findings ([d274977](https://github.com/sandy5544/InstaPatch/commit/d2749772cd7c29c33df140a98704ad391e480907))
+* retain range invoke for YouTube download hook ([214ef35](https://github.com/sandy5544/InstaPatch/commit/214ef35ad96b87016a69756f0ee9915d24664cc2))
+
 ## [1.8.4](https://github.com/sandy5544/InstaPatch/compare/v1.8.3...v1.8.4) (2026-09-26)
 
 ### 🐛 Bug Fixes
