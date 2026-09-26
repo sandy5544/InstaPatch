@@ -1,12 +1,11 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.11.0",
+  "version": "1.5.0",
   "patches": [
     {
       "name": "Anti View Once Media",
       "description": "Makes unexpired Instagram view once and view twice DM media permanently replayable.",
       "default": true,
-      "category": null,
       "dependencies": [],
       "compatiblePackages": [
         {
@@ -33,7 +32,6 @@
       "name": "Disable DM pull-to-refresh",
       "description": "Disables pull-to-refresh in the Instagram Direct inbox without disabling refresh elsewhere.",
       "default": true,
-      "category": null,
       "dependencies": [],
       "compatiblePackages": [
         {
@@ -60,7 +58,6 @@
       "name": "Enable PrimeMods Premium",
       "description": "Forces the PrimeMods premium entitlement to enabled locally.",
       "default": false,
-      "category": null,
       "dependencies": [],
       "compatiblePackages": [
         {
@@ -87,7 +84,6 @@
       "name": "Show Follows You",
       "description": "Shows a Follows you indicator on Instagram profiles for accounts that follow you.",
       "default": true,
-      "category": null,
       "dependencies": [],
       "compatiblePackages": [
         {
@@ -100,75 +96,6 @@
           "targets": [
             {
               "version": null,
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "YouTube In-App Downloads",
-      "description": "Routes YouTube's native Download action to the patched app's own background download service.",
-      "default": true,
-      "category": null,
-      "dependencies": [],
-      "compatiblePackages": [
-        {
-          "packageName": "com.google.android.youtube",
-          "name": "YouTube",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": null,
-          "signatures": null,
-          "targets": [
-            {
-              "version": "21.38.123",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "21.37.42",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "21.28.208",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "21.16.256",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "21.13.164",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "20.31.42",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "20.21.37",
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
