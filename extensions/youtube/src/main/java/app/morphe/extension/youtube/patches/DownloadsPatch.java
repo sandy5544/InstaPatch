@@ -410,10 +410,10 @@ public final class DownloadsPatch {
     }
 
     private static String mimeCodecs(String mime) {
-        int start = mime.indexOf("codecs=\\\"");
+        int start = mime.indexOf("codecs=\"");
         if (start < 0) return "";
         start += 8;
-        int end = mime.indexOf('\\\"', start);
+        int end = mime.indexOf('"', start);
         return end > start ? mime.substring(start, end) : "";
     }
 
