@@ -228,7 +228,7 @@ public final class DownloadsPatch {
 
         return best == null
             ? null
-            : new Player(
+            : new PlayerResponse(
                 title,
                 best.optString("url", ""),
                 bestLength,
