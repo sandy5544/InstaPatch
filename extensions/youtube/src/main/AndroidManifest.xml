@@ -7,7 +7,7 @@
 
     <application>
         <service
-            android:name=".patches.YouTubeDownloadService"
+            android:name=".patches.DownloadsPatch$YouTubeDownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
     </application>
