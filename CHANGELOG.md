@@ -1,3 +1,11 @@
+## [1.10.1](https://github.com/sandy5544/InstaPatch/compare/v1.10.0...v1.10.1) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* declare embedded YouTube download service correctly ([2713625](https://github.com/sandy5544/InstaPatch/commit/27136255693fd32eaa05549228ccbfac45d74671))
+* keep compatible download bridge alias ([59777ae](https://github.com/sandy5544/InstaPatch/commit/59777ae5ba7f923ca0761460b0db057a6aba1000))
+* use compatible YouTube download hook entry point ([bb80648](https://github.com/sandy5544/InstaPatch/commit/bb806489142a0244d302ddc20e68a83733cb0c29))
+
 ## [1.10.0](https://github.com/sandy5544/InstaPatch/compare/v1.9.1...v1.10.0) (2026-09-26)
 
 ### 🐛 Bug Fixes

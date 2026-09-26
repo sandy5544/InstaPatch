@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-26T18:13:42",
-  "description": "## [1.10.0](https://github.com/sandy5544/InstaPatch/compare/v1.9.1...v1.10.0) (2026-09-26)\n\n### 🐛 Bug Fixes\n\n* keep downloader initialization exception-safe ([9656fed](https://github.com/sandy5544/InstaPatch/commit/9656fed75feace87d02cebfda64bbb125812c007))\n* package embedded downloader native libraries ([f774068](https://github.com/sandy5544/InstaPatch/commit/f774068d5f9e17427f3c15737f26a775628e6c2e))\n\n### ✨ New Features\n\n* add embedded yt-dlp downloader dependencies ([168a076](https://github.com/sandy5544/InstaPatch/commit/168a076837501d1571c4648423aa1eb88c611ca8))\n* package yt-dlp and ffmpeg in YouTube extension ([ed915f1](https://github.com/sandy5544/InstaPatch/commit/ed915f1b97e9d5bb90ec7e4a394bce4292bc7a74))\n* replace custom resolver with embedded yt-dlp engine ([bb88b26](https://github.com/sandy5544/InstaPatch/commit/bb88b261bec150f8dc001c5bf1ab11f20a3f5601))",
-  "download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.10.0/patches-1.10.0.mpp",
-  "signature_download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.10.0/patches-1.10.0.mpp.asc",
-  "version": "1.10.0"
+  "created_at": "2026-09-26T18:44:44",
+  "description": "## [1.10.1](https://github.com/sandy5544/InstaPatch/compare/v1.10.0...v1.10.1) (2026-09-26)\n\n### 🐛 Bug Fixes\n\n* declare embedded YouTube download service correctly ([2713625](https://github.com/sandy5544/InstaPatch/commit/27136255693fd32eaa05549228ccbfac45d74671))\n* keep compatible download bridge alias ([59777ae](https://github.com/sandy5544/InstaPatch/commit/59777ae5ba7f923ca0761460b0db057a6aba1000))\n* use compatible YouTube download hook entry point ([bb80648](https://github.com/sandy5544/InstaPatch/commit/bb806489142a0244d302ddc20e68a83733cb0c29))",
+  "download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.10.1/patches-1.10.1.mpp",
+  "signature_download_url": "https://github.com/sandy5544/InstaPatch/releases/download/v1.10.1/patches-1.10.1.mpp.asc",
+  "version": "1.10.1"
 }
