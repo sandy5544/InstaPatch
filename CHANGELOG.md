@@ -1,3 +1,23 @@
+## [1.8.3](https://github.com/sandy5544/InstaPatch/compare/v1.8.2...v1.8.3) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* add downloader control layout ([00b032d](https://github.com/sandy5544/InstaPatch/commit/00b032db5170233124f9b81143e065d44754d415))
+* add downloader icon ([5dfd761](https://github.com/sandy5544/InstaPatch/commit/5dfd7613128237f40de742bc9287134bdc4d2adc))
+* add downloader icon variant ([cb762e5](https://github.com/sandy5544/InstaPatch/commit/cb762e507c2e022d01f75ad68b86b59ea29b178f))
+* correct YouTube downloader Java syntax ([6edac54](https://github.com/sandy5544/InstaPatch/commit/6edac5467fa31a1e10cd44434358fe0eae3c22ef))
+* initialize downloader button safely ([5c3b6d7](https://github.com/sandy5544/InstaPatch/commit/5c3b6d73a5eb1a59d7de2516d9802aa7a413d06b))
+* rebuild safe YouTube downloader ([02f8bc8](https://github.com/sandy5544/InstaPatch/commit/02f8bc80db1ef1efb5573cbcadb925aea37a0212))
+* rebuild safe YouTube downloader ([be7034e](https://github.com/sandy5544/InstaPatch/commit/be7034e9df8d38fa50b0c7cf7be4faa80bd99cc1))
+* remove escaped newlines from downloader hook ([57962ae](https://github.com/sandy5544/InstaPatch/commit/57962aee3254c22148ea46c7dfef3ea9df6ecb20))
+* remove obsolete download fingerprint ([b967899](https://github.com/sandy5544/InstaPatch/commit/b967899af58bc67c679eb33477a5a7fe16466ff9))
+* remove obsolete download hook ([7030467](https://github.com/sandy5544/InstaPatch/commit/70304675860227b3c53da71d4da0d4e9f3898c79))
+* remove unsupported custom download button ([1342906](https://github.com/sandy5544/InstaPatch/commit/1342906b938f14c14301e1d4566f60e72e8a1117))
+* restore valid download hook dependencies ([2fa851d](https://github.com/sandy5544/InstaPatch/commit/2fa851da84c50bd889421c54c9fa50888e3ef8e9))
+* restore YouTube download fingerprint ([af8877a](https://github.com/sandy5544/InstaPatch/commit/af8877a89c71a7799683c31f06650d4d933b521d))
+* stop intercepting native YouTube downloads ([ea24b56](https://github.com/sandy5544/InstaPatch/commit/ea24b56bd4452a1fc19578987cfac6675d6a3de8))
+* use compatible YouTube download hook ([e9ec2c4](https://github.com/sandy5544/InstaPatch/commit/e9ec2c48856fe040513bdc2e0c15678831fa8b0f))
+
 ## [1.8.2](https://github.com/sandy5544/InstaPatch/compare/v1.8.1...v1.8.2) (2026-09-26)
 
 ### 🐛 Bug Fixes
