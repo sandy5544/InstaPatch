@@ -1,3 +1,9 @@
+## [1.8.4](https://github.com/sandy5544/InstaPatch/compare/v1.8.3...v1.8.4) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* harden YouTube in-app download hook fallback path ([59d3c01](https://github.com/sandy5544/InstaPatch/commit/59d3c01b0d1c9e40334a8e49c54d5d7e186082ee))
+
 ## [1.8.3](https://github.com/sandy5544/InstaPatch/compare/v1.8.2...v1.8.3) (2026-09-26)
 
 ### 🐛 Bug Fixes
