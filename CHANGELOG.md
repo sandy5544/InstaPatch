@@ -1,3 +1,9 @@
+## [1.8.2](https://github.com/sandy5544/InstaPatch/compare/v1.8.1...v1.8.2) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* isolate YouTube download hook from downloader failures ([27b08a5](https://github.com/sandy5544/InstaPatch/commit/27b08a5d7a5f537a3711444639350b0f70956182))
+
 ## [1.8.1](https://github.com/sandy5544/InstaPatch/compare/v1.8.0...v1.8.1) (2026-09-26)
 
 ### 🐛 Bug Fixes
