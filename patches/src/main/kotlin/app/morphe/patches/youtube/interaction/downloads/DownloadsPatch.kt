@@ -5,13 +5,13 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.Constants.COMPATIBILITY_YOUTUBE
 
 private const val EXTENSION_CLASS =
-    "Lapp/morphe/extension/youtube/downloads/DownloadsPatch;"
+    "Lapp/morphe/extension/youtube/patches/DownloadsPatch;"
 
 @Suppress("unused")
 val youtubeInAppDownloadsPatch = bytecodePatch(
     name = "YouTube In-App Downloads",
     description = "Adds an experimental in-app download action using a background direct MP4 downloader. " +
-        "Protected, ciphered, and entitlement-gated streams are not handled by the custom downloader."
+        "Protected, ciphered, and entitlement-gated streams are not decoded or decrypted."
 ) {
     compatibleWith(COMPATIBILITY_YOUTUBE)
 

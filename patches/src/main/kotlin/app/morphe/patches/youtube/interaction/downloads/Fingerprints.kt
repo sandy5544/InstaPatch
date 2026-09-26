@@ -8,9 +8,16 @@ import com.android.tools.smali.dexlib2.AccessFlags
 internal object OfflineVideoEndpointFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "V",
-    parameters = listOf("Ljava/util/Map;", "L", "Ljava/lang/String", "L"),
-    filters = listOf(anyInstruction(
-        string("Unsupported Offline Video Action: "),
-        string("Unsupported Offline Video Action: %s")
-    ))
+    parameters = listOf(
+        "Ljava/util/Map;",
+        "L",
+        "Ljava/lang/String",
+        "L",
+    ),
+    filters = listOf(
+        anyInstruction(
+            string("Unsupported Offline Video Action: "),
+            string("Unsupported Offline Video Action: %s")
+        )
+    )
 )
