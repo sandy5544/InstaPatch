@@ -163,6 +163,54 @@ final class YouTubeDownloadJob {
         }
     }
 
+    private static YoutubeDLRequest buildRequest(
+            String videoId,
+            File workDir,
+            String extractorArgs) {
+        YoutubeDLRequest request = new YoutubeDLRequest(
+                "https://www.youtube.com/watch?v=" + videoId);
+
+        request.addOption("--no-playlist");
+        request.addOption("--no-mtime");
+        request.addOption("--newline");
+        request.addOption("--continue");
+        request.addOption("--retries", "10");
+        request.addOption("--fragment-retries", "10");
+        request.addOption("--extractor-retries", "3");
+        request.addOption("--file-access-retries", "3");
+        request.addOption("--retry-sleep", "http:exp=1:120");
+        request.addOption("--retry-sleep", "fragment:exp=1:60");
+        request.addOption("--concurrent-fragments", "4");
+        request.addOption("--extractor-args", extractorArgs);
+        request.addOption("-f",
+                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
+        request.addOption("--merge-output-format", "mp4");
+        request.addOption("--restrict-filenames");
+        request.addOption("-o",
+                new File(workDir, "%(title)s.%(ext)s").getAbsolutePath());
+
+        return request;
+    }
+
+    private static void cleanupPartialFiles(File workDir) {
+        File[] files = workDir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (!file.isFile()) continue;
+
+            String name = file.getName().toLowerCase(Locale.US);
+            if (name.endsWith(".part")
+                    || name.endsWith(".ytdl")
+                    || name.endsWith(".mp4")) {
+                try {
+                    file.delete();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+    }
+
     private static File findDownloadedMp4(File workDir) {
         File[] files = workDir.listFiles();
         if (files == null) return null;
