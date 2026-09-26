@@ -1,3 +1,9 @@
+## [1.8.1](https://github.com/sandy5544/InstaPatch/compare/v1.8.0...v1.8.1) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* avoid network access on YouTube click thread ([e16ff66](https://github.com/sandy5544/InstaPatch/commit/e16ff664503f2908d84e72b13ee0659e8ab53f1a))
+
 ## [1.8.0](https://github.com/sandy5544/InstaPatch/compare/v1.7.0...v1.8.0) (2026-09-26)
 
 ### ✨ New Features
