@@ -55,11 +55,8 @@ public final class DownloadsPatch {
     public static boolean onDownloadRequested(String videoId) {
         if (!isVideoId(videoId)) return false;
 
-        // Preflight before suppressing YouTube's native endpoint. Protected,
-        // ciphered, entitlement-gated, or otherwise unsupported streams return
-        // false so YouTube can use its own authorized offline/DRM implementation.
-        if (!AdvancedDownloads.canHandle(videoId)) return false;
-
+        // Never perform network I/O on the YouTube click-handler thread.
+        // The custom downloader runs entirely on the worker executor.
         EXECUTOR.execute(() -> AdvancedDownloads.download(videoId));
         Utils.showToastShort("Morphe: YouTube download started");
         return true;
