@@ -41,6 +41,14 @@ public final class DownloadsPatch {
         }
     }
 
+    /**
+     * Compatibility entry point for older/generated hooks that still invoke
+     * the previous downloader method name.
+     */
+    public static boolean onDownloadRequested(String videoId) {
+        return start(videoId);
+    }
+
     private static boolean isVideoId(String value) {
         return value != null && value.matches("[A-Za-z0-9_-]{11}");
     }
