@@ -407,7 +407,7 @@ public final class DownloadsPatch {
         }
 
         URL url = new URL(
-                "https://www.youtube.com/youtubei/v1/player?prettyPrint=false"
+                "https://youtubei.googleapis.com/youtubei/v1/player?alt=json&prettyPrint=false"
         );
 
         HttpURLConnection connection =
@@ -419,6 +419,11 @@ public final class DownloadsPatch {
         connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("X-YouTube-Client-Name", "3");
+        connection.setRequestProperty(
+                "X-YouTube-Client-Version",
+                getYouTubeVersion(context)
+        );
         connection.setRequestProperty(
                 "User-Agent",
                 String.format(
