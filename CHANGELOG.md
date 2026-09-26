@@ -1,3 +1,11 @@
+## [1.8.0](https://github.com/sandy5544/InstaPatch/compare/v1.7.0...v1.8.0) (2026-09-26)
+
+### ✨ New Features
+
+* add protected-stream preflight fallback ([16abf23](https://github.com/sandy5544/InstaPatch/commit/16abf2343b6f22243bb27e8e36fdd37f8171c93a))
+* fall back to native downloads for protected streams ([aed49d8](https://github.com/sandy5544/InstaPatch/commit/aed49d82b39398ca2f16a704677df498445752a8))
+* preserve native DRM downloads ([a8511f8](https://github.com/sandy5544/InstaPatch/commit/a8511f8e8cf95e9c8080fe1f383da1ef32547402))
+
 ## [1.7.0](https://github.com/sandy5544/InstaPatch/compare/v1.6.0...v1.7.0) (2026-09-26)
 
 ### ✨ New Features

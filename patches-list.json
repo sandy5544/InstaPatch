@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "patches": [
     {
       "name": "Anti View Once Media",
@@ -108,7 +108,7 @@
     },
     {
       "name": "YouTube In-App Downloads",
-      "description": "Adds an experimental in-app download action to YouTube. Only direct progressive MP4 streams returned by the player response are downloaded.",
+      "description": "Adds an experimental in-app download action to YouTube with adaptive video + audio downloads. Protected, ciphered, and entitlement-gated streams remain on YouTube's native offline/DRM path.",
       "default": true,
       "dependencies": [],
       "compatiblePackages": [

@@ -5,7 +5,7 @@ A focused Morphe patch source containing one Instagram patch.
 ## ⚙️ Patch Details
 
 <!-- PATCHES_START -->
-> **[v1.7.0](https://github.com/sandy5544/InstaPatch/releases/tag/v1.7.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;5 patches total
+> **[v1.8.0](https://github.com/sandy5544/InstaPatch/releases/tag/v1.8.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;5 patches total
 <details open>
 <summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
@@ -30,7 +30,7 @@ A focused Morphe patch source containing one Instagram patch.
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [YouTube In-App Downloads](#youtube-in-app-downloads) | Adds an experimental in-app download action to YouTube. Only direct progressive MP4 streams returned by the player response are downloaded. |  |
+| [YouTube In-App Downloads](#youtube-in-app-downloads) | Adds an experimental in-app download action to YouTube with adaptive video + audio downloads. Protected, ciphered, and entitlement-gated streams remain on YouTube's native offline/DRM path. |  |
 
 </details>
 
