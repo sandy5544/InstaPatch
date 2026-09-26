@@ -66,7 +66,7 @@ public final class DownloadsPatch {
      * Called by the dedicated player action button.
      * This method never performs network or media work on the UI thread.
      */
-    public static boolean start(String videoId) {
+    public static boolean onDownloadRequested(String videoId) {\n        return start(videoId);\n    }\n\n    public static boolean start(String videoId) {
         if (!isVideoId(videoId)) {
             safeToast("Morphe: invalid YouTube video ID");
             return false;
@@ -376,7 +376,7 @@ public final class DownloadsPatch {
     }
 
     private static String mimeCodecs(String mime) {
-        int start = mime.indexOf("codecs="");
+        int start = mime.indexOf("codecs=\"");
         if (start < 0) return "";
         start += 8;
         int end = mime.indexOf('"', start);
