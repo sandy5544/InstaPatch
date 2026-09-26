@@ -124,6 +124,7 @@ final class YouTubeDownloadJob {
 
             copyToMediaStore(context, output, destination);
             publish(context, destination);
+            recordDownload(context, videoId, displayName, destination.toString());
             destination = null;
 
             progress.update(100, "Download complete");
@@ -243,6 +244,54 @@ final class YouTubeDownloadJob {
             }
         }
         return best;
+    }
+
+    private static void recordDownload(
+            Context context,
+            String videoId,
+            String displayName,
+            String contentUri) throws Exception {
+        File index = new File(context.getFilesDir(), "morphe_downloads.json");
+        org.json.JSONArray items = new org.json.JSONArray();
+
+        if (index.isFile()) {
+            try (FileInputStream input = new FileInputStream(index)) {
+                byte[] bytes = new byte[(int) index.length()];
+                int offset = 0;
+                int read;
+                while (offset < bytes.length
+                        && (read = input.read(bytes, offset, bytes.length - offset)) > 0) {
+                    offset += read;
+                }
+                if (offset > 0) {
+                    try {
+                        items = new org.json.JSONArray(
+                                new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+                    } catch (Throwable ignored) {
+                        items = new org.json.JSONArray();
+                    }
+                }
+            }
+        }
+
+        org.json.JSONArray updated = new org.json.JSONArray();
+        org.json.JSONObject item = new org.json.JSONObject();
+        item.put("videoId", videoId);
+        item.put("title", displayName);
+        item.put("uri", contentUri);
+        item.put("createdAt", System.currentTimeMillis());
+        updated.put(item);
+
+        for (int i = 0; i < items.length(); i++) {
+            org.json.JSONObject existing = items.optJSONObject(i);
+            if (existing == null) continue;
+            if (videoId.equals(existing.optString("videoId"))) continue;
+            updated.put(existing);
+        }
+
+        try (java.io.FileOutputStream output = new java.io.FileOutputStream(index, false)) {
+            output.write(updated.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
 
     private static Uri createDestination(Context context, String name) {
