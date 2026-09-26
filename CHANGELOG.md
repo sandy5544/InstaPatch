@@ -1,3 +1,9 @@
+## [1.9.0](https://github.com/sandy5544/InstaPatch/compare/v1.8.5...v1.9.0) (2026-09-26)
+
+### ✨ New Features
+
+* make YouTube Download a native in-app download ([#8](https://github.com/sandy5544/InstaPatch/issues/8)) ([6d6e7ed](https://github.com/sandy5544/InstaPatch/commit/6d6e7ed9fd2dad332551399b9aea4d18c3680200))
+
 ## [1.8.5](https://github.com/sandy5544/InstaPatch/compare/v1.8.4...v1.8.5) (2026-09-26)
 
 ### 🐛 Bug Fixes

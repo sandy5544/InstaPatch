@@ -5,7 +5,7 @@ A focused Morphe patch source containing one Instagram patch.
 ## ⚙️ Patch Details
 
 <!-- PATCHES_START -->
-> **[v1.8.5](https://github.com/sandy5544/InstaPatch/releases/tag/v1.8.5)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;5 patches total
+> **[v1.9.0](https://github.com/sandy5544/InstaPatch/releases/tag/v1.9.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;5 patches total
 <details open>
 <summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
@@ -30,7 +30,7 @@ A focused Morphe patch source containing one Instagram patch.
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [YouTube In-App Downloads](#youtube-in-app-downloads) | Adds an experimental in-app download action using a background direct MP4 downloader. Protected, ciphered, and entitlement-gated streams are not decoded or decrypted. |  |
+| [YouTube In-App Downloads](#youtube-in-app-downloads) | Routes YouTube's native Download action to the patched app's own background download service. |  |
 
 </details>
 
