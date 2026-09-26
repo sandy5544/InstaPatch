@@ -10,8 +10,8 @@ private const val EXTENSION_CLASS =
 @Suppress("unused")
 val youtubeInAppDownloadsPatch = bytecodePatch(
     name = "YouTube In-App Downloads",
-    description = "Adds an experimental in-app download action using a background direct MP4 downloader. " +
-        "Protected, ciphered, and entitlement-gated streams are not decoded or decrypted."
+    description = "Uses the in-app Download action to start a background local MP4 download. " +
+        "Unsupported, protected, ciphered, and DRM streams are rejected by the downloader."
 ) {
     compatibleWith(COMPATIBILITY_YOUTUBE)
 
@@ -20,7 +20,12 @@ val youtubeInAppDownloadsPatch = bytecodePatch(
             addInstructionsWithLabels(
                 0,
                 """
-                    invoke-static/range { p3 .. p3 }, $EXTENSION_CLASS->onDownloadRequested(Ljava/lang/Object;)V
+                    invoke-static/range { p3 .. p3 }, $EXTENSION_CLASS->start(Ljava/lang/String;)Z
+                    move-result v0
+                    if-eqz v0, :show_native_downloader
+                    return-void
+                    :show_native_downloader
+                    nop
                 """
             )
         }
