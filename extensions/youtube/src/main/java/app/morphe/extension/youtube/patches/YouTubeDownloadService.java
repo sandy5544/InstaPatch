@@ -124,20 +124,23 @@ public final class YouTubeDownloadService extends Service {
                         ? new Notification.Builder(this, CHANNEL_ID)
                         : new Notification.Builder(this);
 
+        Intent libraryIntent =
+                new Intent(this, MorpheDownloadsActivity.class);
+        PendingIntent libraryPendingIntent =
+                PendingIntent.getActivity(
+                        this,
+                        0,
+                        libraryIntent,
+                        Build.VERSION.SDK_INT >= 23
+                                ? PendingIntent.FLAG_UPDATE_CURRENT
+                                        | PendingIntent.FLAG_IMMUTABLE
+                                : PendingIntent.FLAG_UPDATE_CURRENT);
+
         builder.setSmallIcon(
                         progress >= 100
                                 ? android.R.drawable.stat_sys_download_done
                                 : android.R.drawable.stat_sys_download)
-                Intent libraryIntent = new Intent(this, MorpheDownloadsActivity.class);
-        PendingIntent libraryPendingIntent = PendingIntent.getActivity(
-                this,
-                0,
-                libraryIntent,
-                Build.VERSION.SDK_INT >= 23
-                        ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-                        : PendingIntent.FLAG_UPDATE_CURRENT);
-
-        .setContentIntent(libraryPendingIntent)
+                .setContentIntent(libraryPendingIntent)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setOnlyAlertOnce(true)
