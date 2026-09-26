@@ -126,9 +126,12 @@ final class YouTubeDownloadJob {
                 YoutubeDL.getInstance().init(context.getApplicationContext());
                 FFmpeg.getInstance().init(context.getApplicationContext());
                 initialized = true;
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 initialized = false;
                 throw ex;
+            } catch (Throwable ex) {
+                initialized = false;
+                throw new IllegalStateException("Could not initialize embedded downloader", ex);
             }
         }
     }
