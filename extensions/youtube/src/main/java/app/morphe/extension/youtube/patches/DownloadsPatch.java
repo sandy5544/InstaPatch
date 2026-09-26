@@ -66,6 +66,19 @@ public final class DownloadsPatch {
      * Called by the dedicated player action button.
      * This method never performs network or media work on the UI thread.
      */
+    public static void onDownloadRequested(Object maybeVideoId) {
+        if (!(maybeVideoId instanceof String)) {
+            return;
+        }
+
+        String videoId = (String) maybeVideoId;
+        if (!isVideoId(videoId)) {
+            return;
+        }
+
+        start(videoId);
+    }
+
     public static boolean onDownloadRequested(String videoId) {
         return start(videoId);
     }
@@ -786,12 +799,16 @@ public final class DownloadsPatch {
         ContentValues values = new ContentValues();
         values.put(MediaStore.Video.Media.IS_PENDING, 0);
 
-        context.getContentResolver().update(
+        int updated = context.getContentResolver().update(
                 destination,
                 values,
                 null,
                 null
         );
+        if (updated <= 0) {
+            Logger.printDebug(() ->
+                    "MediaStore publish did not update target row");
+        }
     }
 
     private static void deleteMediaStore(
@@ -891,10 +908,18 @@ public final class DownloadsPatch {
 
     private static String getYouTubeVersion(Context context) {
         try {
+            String packageName = context.getPackageName();
+            if (packageName == null
+                    || packageName.isEmpty()
+                    || (!"com.google.android.youtube".equals(packageName)
+                    && !"com.google.android.apps.youtube.music".equals(packageName))) {
+                packageName = "com.google.android.youtube";
+            }
+
             android.content.pm.PackageInfo info =
                     context.getPackageManager()
                             .getPackageInfo(
-                                    "com.google.android.youtube",
+                                    packageName,
                                     0
                             );
             if (info.versionName != null
