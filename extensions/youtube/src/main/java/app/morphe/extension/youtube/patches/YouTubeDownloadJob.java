@@ -28,6 +28,14 @@ final class YouTubeDownloadJob {
     private static volatile boolean initialized;
     private static final String PROCESS_PREFIX = "morphe-youtube-";
 
+    // Seal Plus style local YouTube fallback chain.
+    private static final String[] YOUTUBE_CLIENT_STRATEGIES = {
+            "youtube:player_client=tv_embedded,web_embedded",
+            "youtube:player_client=android_vr",
+            "youtube:player_client=web_safari",
+            "youtube:player_client=default"
+    };
+
     private YouTubeDownloadJob() {
     }
 
