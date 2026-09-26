@@ -37,12 +37,21 @@ import app.morphe.extension.shared.Utils;
  * re-encoding. Ciphered and DRM-protected streams are intentionally excluded.
  */
 final class AdvancedDownloads {
-    private static final int TIMEOUT = 30_000;
+    private static final int TIMEOUT = 8_000;
     private static final int BUFFER = 64 * 1024;
 
     private AdvancedDownloads() {}
 
-    static void download(String videoId) {
+    static boolean canHandle(String videoId) {
+        try {
+            return resolve(videoId, Utils.getContext()) != null;
+        } catch (Exception e) {
+            Logger.printDebug(() -> "YouTube direct-stream preflight unavailable: " + e);
+            return false;
+        }
+    }
+
+    static boolean download(String videoId) {
         Context context = Utils.getContext();
         File video = null;
         File audio = null;
@@ -52,7 +61,11 @@ final class AdvancedDownloads {
         try {
             Result r = resolve(videoId, context);
             if (r == null) {
-                throw new IllegalStateException("No direct unprotected MP4 stream");
+                // Keep YouTube's native offline path for ciphered, protected,
+                // entitlement-gated, or otherwise non-direct streams. This is
+                // also the path that can use YouTube-authorized DRM licenses.
+                Logger.printDebug(() -> "YouTube stream is not directly downloadable; keeping native offline path");
+                return false;
             }
 
             File dir = new File(context.getCacheDir(), "morphe-youtube");
@@ -86,6 +99,7 @@ final class AdvancedDownloads {
             context.getContentResolver().update(destination, values, null, null);
 
             Utils.showToastShort("Morphe: YouTube download complete");
+            return true;
         } catch (Exception e) {
             if (destination != null) {
                 try {
@@ -94,8 +108,9 @@ final class AdvancedDownloads {
             }
             Logger.printException(() -> "YouTube adaptive download failed", e);
             Utils.showToastShort(
-                "Morphe: direct download unavailable; YouTube protected/offline download remains native"
+                "Morphe: direct download failed; YouTube offline download remains native"
             );
+            return false;
         } finally {
             delete(video);
             delete(audio);
