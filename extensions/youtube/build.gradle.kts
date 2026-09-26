@@ -3,6 +3,7 @@ dependencies {
     compileOnly(libs.morphe.patches.library)
     implementation(libs.youtubedl.android.library)
     implementation(libs.youtubedl.android.ffmpeg)
+    implementation(libs.youtubedl.android.aria2c)
 }
 
 android {

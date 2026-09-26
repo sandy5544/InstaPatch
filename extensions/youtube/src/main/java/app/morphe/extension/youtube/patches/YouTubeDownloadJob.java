@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 
 import com.yausername.ffmpeg.FFmpeg;
+import com.yausername.aria2c.Aria2c;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLRequest;
 
@@ -26,7 +27,16 @@ final class YouTubeDownloadJob {
 
     private static final Object INIT_LOCK = new Object();
     private static volatile boolean initialized;
+    private static volatile boolean aria2cAvailable;
     private static final String PROCESS_PREFIX = "morphe-youtube-";
+
+    // Seal Plus style local YouTube fallback chain.
+    private static final String[] YOUTUBE_CLIENT_STRATEGIES = {
+            "youtube:player_client=tv_embedded,web_embedded",
+            "youtube:player_client=android_vr",
+            "youtube:player_client=web_safari",
+            "youtube:player_client=default"
+    };
 
     private YouTubeDownloadJob() {
     }
@@ -52,36 +62,55 @@ final class YouTubeDownloadJob {
         try {
             progress.update(0, "Starting yt-dlp");
 
-            YoutubeDLRequest request = new YoutubeDLRequest(
-                    "https://www.youtube.com/watch?v=" + videoId);
+            Exception lastFailure = null;
 
-            request.addOption("--no-playlist");
-            request.addOption("--no-mtime");
-            request.addOption("--newline");
-            request.addOption("-f",
-                    "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]");
-            request.addOption("--merge-output-format", "mp4");
-            request.addOption("-o",
-                    new File(workDir, "%(title)s.%(ext)s").getAbsolutePath());
+            for (int attempt = 0; attempt < YOUTUBE_CLIENT_STRATEGIES.length; attempt++) {
+                String strategy = YOUTUBE_CLIENT_STRATEGIES[attempt];
 
-            YoutubeDL.getInstance().execute(
-                    request,
-                    processId,
-                    (percent, etaSeconds, line) -> {
-                        int safePercent = percent == null
-                                ? -1
-                                : Math.max(0, Math.min(99, percent.intValue()));
-                        String message = line == null || line.trim().isEmpty()
-                                ? "Downloading"
-                                : line.trim();
-                        progress.update(safePercent, message);
-                        return kotlin.Unit.INSTANCE;
-                    });
+                progress.update(
+                        Math.min(5, attempt + 1),
+                        "Preparing YouTube download (" + (attempt + 1)
+                                + "/" + YOUTUBE_CLIENT_STRATEGIES.length + ")");
 
-            output = findDownloadedMp4(workDir);
+                try {
+                    YoutubeDLRequest request =
+                            buildRequest(videoId, workDir, strategy);
+
+                    YoutubeDL.getInstance().execute(
+                            request,
+                            processId + "-" + attempt,
+                            (percent, etaSeconds, line) -> {
+                                int safePercent = percent == null
+                                        ? -1
+                                        : Math.max(0, Math.min(95, percent.intValue()));
+                                String message = line == null || line.trim().isEmpty()
+                                        ? "Downloading"
+                                        : line.trim();
+                                progress.update(safePercent, message);
+                                return kotlin.Unit.INSTANCE;
+                            });
+
+                    output = findDownloadedMp4(workDir);
+                    if (output != null && output.length() > 0) {
+                        break;
+                    }
+
+                    lastFailure = new IllegalStateException(
+                            "yt-dlp completed without an MP4 output");
+                } catch (Exception ex) {
+                    lastFailure = ex;
+                    Logger.printDebug(() ->
+                            "YouTube download strategy failed: " + strategy);
+                    cleanupPartialFiles(workDir);
+                }
+            }
+
             if (output == null || output.length() <= 0) {
+                if (lastFailure != null) {
+                    throw lastFailure;
+                }
                 throw new IllegalStateException(
-                        "yt-dlp completed without an MP4 output");
+                        "No compatible YouTube MP4 stream was produced");
             }
 
             progress.update(96, "Saving to Movies/Morphe YouTube");
@@ -95,6 +124,7 @@ final class YouTubeDownloadJob {
 
             copyToMediaStore(context, output, destination);
             publish(context, destination);
+            recordDownload(context, videoId, displayName, destination.toString());
             destination = null;
 
             progress.update(100, "Download complete");
@@ -125,6 +155,14 @@ final class YouTubeDownloadJob {
             try {
                 YoutubeDL.getInstance().init(context.getApplicationContext());
                 FFmpeg.getInstance().init(context.getApplicationContext());
+                try {
+                    Aria2c.getInstance().init(context.getApplicationContext());
+                    aria2cAvailable = true;
+                } catch (Throwable ex) {
+                    aria2cAvailable = false;
+                    Logger.printDebug(() ->
+                            "Embedded aria2c unavailable, using yt-dlp downloader: " + ex);
+                }
                 initialized = true;
             } catch (Exception ex) {
                 initialized = false;
@@ -132,6 +170,62 @@ final class YouTubeDownloadJob {
             } catch (Throwable ex) {
                 initialized = false;
                 throw new IllegalStateException("Could not initialize embedded downloader", ex);
+            }
+        }
+    }
+
+    private static YoutubeDLRequest buildRequest(
+            String videoId,
+            File workDir,
+            String extractorArgs) {
+        YoutubeDLRequest request = new YoutubeDLRequest(
+                "https://www.youtube.com/watch?v=" + videoId);
+
+        request.addOption("--no-playlist");
+        request.addOption("--no-mtime");
+        request.addOption("--newline");
+        request.addOption("--continue");
+        request.addOption("--retries", "10");
+        request.addOption("--fragment-retries", "10");
+        request.addOption("--extractor-retries", "3");
+        request.addOption("--file-access-retries", "3");
+        request.addOption("--retry-sleep", "http:exp=1:120");
+        request.addOption("--retry-sleep", "fragment:exp=1:60");
+        request.addOption("--concurrent-fragments", "4");
+        if (aria2cAvailable) {
+            request.addOption(
+                    "--downloader",
+                    "http,https,ftp,ftps:libaria2c.so");
+            request.addOption(
+                    "--downloader-args",
+                    "libaria2c.so:file-allocation=none:max-tries=5:retry-wait=2:console-log-level=warn");
+        }
+        request.addOption("--extractor-args", extractorArgs);
+        request.addOption("-f",
+                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
+        request.addOption("--merge-output-format", "mp4");
+        request.addOption("--restrict-filenames");
+        request.addOption("-o",
+                new File(workDir, "%(title)s.%(ext)s").getAbsolutePath());
+
+        return request;
+    }
+
+    private static void cleanupPartialFiles(File workDir) {
+        File[] files = workDir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (!file.isFile()) continue;
+
+            String name = file.getName().toLowerCase(Locale.US);
+            if (name.endsWith(".part")
+                    || name.endsWith(".ytdl")
+                    || name.endsWith(".mp4")) {
+                try {
+                    file.delete();
+                } catch (Throwable ignored) {
+                }
             }
         }
     }
@@ -150,6 +244,54 @@ final class YouTubeDownloadJob {
             }
         }
         return best;
+    }
+
+    private static void recordDownload(
+            Context context,
+            String videoId,
+            String displayName,
+            String contentUri) throws Exception {
+        File index = new File(context.getFilesDir(), "morphe_downloads.json");
+        org.json.JSONArray items = new org.json.JSONArray();
+
+        if (index.isFile()) {
+            try (FileInputStream input = new FileInputStream(index)) {
+                byte[] bytes = new byte[(int) index.length()];
+                int offset = 0;
+                int read;
+                while (offset < bytes.length
+                        && (read = input.read(bytes, offset, bytes.length - offset)) > 0) {
+                    offset += read;
+                }
+                if (offset > 0) {
+                    try {
+                        items = new org.json.JSONArray(
+                                new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+                    } catch (Throwable ignored) {
+                        items = new org.json.JSONArray();
+                    }
+                }
+            }
+        }
+
+        org.json.JSONArray updated = new org.json.JSONArray();
+        org.json.JSONObject item = new org.json.JSONObject();
+        item.put("videoId", videoId);
+        item.put("title", displayName);
+        item.put("uri", contentUri);
+        item.put("createdAt", System.currentTimeMillis());
+        updated.put(item);
+
+        for (int i = 0; i < items.length(); i++) {
+            org.json.JSONObject existing = items.optJSONObject(i);
+            if (existing == null) continue;
+            if (videoId.equals(existing.optString("videoId"))) continue;
+            updated.put(existing);
+        }
+
+        try (java.io.FileOutputStream output = new java.io.FileOutputStream(index, false)) {
+            output.write(updated.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
 
     private static Uri createDestination(Context context, String name) {
