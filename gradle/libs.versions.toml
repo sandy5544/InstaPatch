@@ -13,6 +13,7 @@ gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 youtubedl-android-library = { module = "io.github.junkfood02.youtubedl-android:library", version.ref = "youtubedl-android" }
 youtubedl-android-ffmpeg = { module = "io.github.junkfood02.youtubedl-android:ffmpeg", version.ref = "youtubedl-android" }
+youtubedl-android-aria2c = { module = "io.github.junkfood02.youtubedl-android:aria2c", version.ref = "youtubedl-android" }
 morphe-patches-library = { module = "app.morphe:morphe-patches-library", version.ref = "morphe-patches-library" }
 morphe-extensions-library = { module = "app.morphe:morphe-extensions-library", version.ref = "morphe-patches-library" }
 instagram-morphe-patches-library = { module = "app.morphe:instagram-morphe-patches-library", version.ref = "instagram-morphe-patches-library" }
