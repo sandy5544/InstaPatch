@@ -5,7 +5,7 @@ A focused Morphe patch source containing one Instagram patch.
 ## ⚙️ Patch Details
 
 <!-- PATCHES_START -->
-> **[v1.11.0](https://github.com/sandy5544/InstaPatch/releases/tag/v1.11.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;5 patches total
+> **[v1.5.0](https://github.com/sandy5544/InstaPatch/releases/tag/v1.5.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;4 patches total
 <details open>
 <summary>📦 Instagram&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
@@ -16,21 +16,6 @@ A focused Morphe patch source containing one Instagram patch.
 | [Disable DM pull-to-refresh](#disable-dm-pull-to-refresh) | Disables pull-to-refresh in the Instagram Direct inbox without disabling refresh elsewhere. |  |
 | [Enable PrimeMods Premium](#enable-primemods-premium) | Forces the PrimeMods premium entitlement to enabled locally. |  |
 | [Show Follows You](#show-follows-you) | Shows a Follows you indicator on Instagram profiles for accounts that follow you. |  |
-
-</details>
-
-<details open>
-<summary>📦 YouTube&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
-<br>
-
-**🎯 Supported versions:**
-
-| 21.38.123 | 21.37.42 | 21.28.208 | 21.16.256 | 21.13.164 | 20.31.42 | 20.21.37 |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-
-| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
-|----------|----------------|-----------|
-| [YouTube In-App Downloads](#youtube-in-app-downloads) | Routes YouTube's native Download action to the patched app's own background download service. |  |
 
 </details>
 
