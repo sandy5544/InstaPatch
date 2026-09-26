@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/sandy5544/InstaPatch/compare/v1.10.1...v1.10.2) (2026-09-26)
+
+### 🐛 Bug Fixes
+
+* add Android 15 download service timeout handling ([a75470c](https://github.com/sandy5544/InstaPatch/commit/a75470cb693ab74d0e6bfa7b4f3e1a0df60aaafc))
+* prevent YouTube download entrypoint crash ([c28de96](https://github.com/sandy5544/InstaPatch/commit/c28de967b3297cc7a1f852f0bd6148dd0b388098))
+
 ## [1.10.1](https://github.com/sandy5544/InstaPatch/compare/v1.10.0...v1.10.1) (2026-09-26)
 
 ### 🐛 Bug Fixes
