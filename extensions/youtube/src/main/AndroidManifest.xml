@@ -11,5 +11,9 @@
             android:name=".patches.YouTubeDownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <activity
+            android:name=".patches.MorpheDownloadsActivity"
+            android:exported="false" />
     </application>
 </manifest>
