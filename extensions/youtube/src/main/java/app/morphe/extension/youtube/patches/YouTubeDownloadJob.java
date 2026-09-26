@@ -60,36 +60,55 @@ final class YouTubeDownloadJob {
         try {
             progress.update(0, "Starting yt-dlp");
 
-            YoutubeDLRequest request = new YoutubeDLRequest(
-                    "https://www.youtube.com/watch?v=" + videoId);
+            Exception lastFailure = null;
 
-            request.addOption("--no-playlist");
-            request.addOption("--no-mtime");
-            request.addOption("--newline");
-            request.addOption("-f",
-                    "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]");
-            request.addOption("--merge-output-format", "mp4");
-            request.addOption("-o",
-                    new File(workDir, "%(title)s.%(ext)s").getAbsolutePath());
+            for (int attempt = 0; attempt < YOUTUBE_CLIENT_STRATEGIES.length; attempt++) {
+                String strategy = YOUTUBE_CLIENT_STRATEGIES[attempt];
 
-            YoutubeDL.getInstance().execute(
-                    request,
-                    processId,
-                    (percent, etaSeconds, line) -> {
-                        int safePercent = percent == null
-                                ? -1
-                                : Math.max(0, Math.min(99, percent.intValue()));
-                        String message = line == null || line.trim().isEmpty()
-                                ? "Downloading"
-                                : line.trim();
-                        progress.update(safePercent, message);
-                        return kotlin.Unit.INSTANCE;
-                    });
+                progress.update(
+                        Math.min(5, attempt + 1),
+                        "Preparing YouTube download (" + (attempt + 1)
+                                + "/" + YOUTUBE_CLIENT_STRATEGIES.length + ")");
 
-            output = findDownloadedMp4(workDir);
+                try {
+                    YoutubeDLRequest request =
+                            buildRequest(videoId, workDir, strategy);
+
+                    YoutubeDL.getInstance().execute(
+                            request,
+                            processId + "-" + attempt,
+                            (percent, etaSeconds, line) -> {
+                                int safePercent = percent == null
+                                        ? -1
+                                        : Math.max(0, Math.min(95, percent.intValue()));
+                                String message = line == null || line.trim().isEmpty()
+                                        ? "Downloading"
+                                        : line.trim();
+                                progress.update(safePercent, message);
+                                return kotlin.Unit.INSTANCE;
+                            });
+
+                    output = findDownloadedMp4(workDir);
+                    if (output != null && output.length() > 0) {
+                        break;
+                    }
+
+                    lastFailure = new IllegalStateException(
+                            "yt-dlp completed without an MP4 output");
+                } catch (Exception ex) {
+                    lastFailure = ex;
+                    Logger.printDebug(() ->
+                            "YouTube download strategy failed: " + strategy);
+                    cleanupPartialFiles(workDir);
+                }
+            }
+
             if (output == null || output.length() <= 0) {
+                if (lastFailure != null) {
+                    throw lastFailure;
+                }
                 throw new IllegalStateException(
-                        "yt-dlp completed without an MP4 output");
+                        "No compatible YouTube MP4 stream was produced");
             }
 
             progress.update(96, "Saving to Movies/Morphe YouTube");
