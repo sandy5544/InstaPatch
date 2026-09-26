@@ -27,6 +27,7 @@ final class YouTubeDownloadJob {
 
     private static final Object INIT_LOCK = new Object();
     private static volatile boolean initialized;
+    private static volatile boolean aria2cAvailable;
     private static final String PROCESS_PREFIX = "morphe-youtube-";
 
     // Seal Plus style local YouTube fallback chain.
@@ -153,7 +154,14 @@ final class YouTubeDownloadJob {
             try {
                 YoutubeDL.getInstance().init(context.getApplicationContext());
                 FFmpeg.getInstance().init(context.getApplicationContext());
-                Aria2c.getInstance().init(context.getApplicationContext());
+                try {
+                    Aria2c.getInstance().init(context.getApplicationContext());
+                    aria2cAvailable = true;
+                } catch (Throwable ex) {
+                    aria2cAvailable = false;
+                    Logger.printDebug(() ->
+                            "Embedded aria2c unavailable, using yt-dlp downloader: " + ex);
+                }
                 initialized = true;
             } catch (Exception ex) {
                 initialized = false;
@@ -183,8 +191,14 @@ final class YouTubeDownloadJob {
         request.addOption("--retry-sleep", "http:exp=1:120");
         request.addOption("--retry-sleep", "fragment:exp=1:60");
         request.addOption("--concurrent-fragments", "4");
-        request.addOption("--downloader", "libaria2c.so");
-        request.addOption("--downloader-args", "libaria2c.so:file-allocation=none:max-tries=5:retry-wait=2:console-log-level=warn");
+        if (aria2cAvailable) {
+            request.addOption(
+                    "--downloader",
+                    "http,https,ftp,ftps:libaria2c.so");
+            request.addOption(
+                    "--downloader-args",
+                    "libaria2c.so:file-allocation=none:max-tries=5:retry-wait=2:console-log-level=warn");
+        }
         request.addOption("--extractor-args", extractorArgs);
         request.addOption("-f",
                 "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
