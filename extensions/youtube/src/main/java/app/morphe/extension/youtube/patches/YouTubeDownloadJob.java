@@ -2,28 +2,18 @@ package app.morphe.extension.youtube.patches;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.media.MediaCodec;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
-import android.media.MediaMuxer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.yausername.ffmpeg.FFmpeg;
+import com.yausername.youtubedl_android.YoutubeDL;
+import com.yausername.youtubedl_android.YoutubeDLRequest;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import app.morphe.extension.shared.Logger;
@@ -34,345 +24,136 @@ final class YouTubeDownloadJob {
         void update(int percent, String text);
     }
 
-    private static final int CONNECT_TIMEOUT_MS = 15_000;
-    private static final int READ_TIMEOUT_MS = 30_000;
-    private static final int BUFFER_SIZE = 64 * 1024;
+    private static final Object INIT_LOCK = new Object();
+    private static volatile boolean initialized;
+    private static final String PROCESS_PREFIX = "morphe-youtube-";
 
     private YouTubeDownloadJob() {
     }
 
-    static void run(Context context, String videoId, Progress progress) throws Exception {
-        Selection selection = resolve(context, videoId);
-        if (selection == null) {
-            throw new UnsupportedOperationException(
-                    "No direct unprotected MP4 stream is available");
+    static void run(
+            Context context,
+            String videoId,
+            Progress progress) throws Exception {
+        ensureEngine(context);
+
+        File workDir = new File(
+                context.getCacheDir(),
+                "morphe-youtube/" + System.nanoTime());
+
+        if (!workDir.mkdirs() && !workDir.isDirectory()) {
+            throw new IllegalStateException("Could not create downloader workspace");
         }
 
-        String title = sanitize(selection.title);
-        progress.update(0, "Preparing " + title);
-
+        String processId = PROCESS_PREFIX + System.nanoTime();
+        File output = null;
         Uri destination = null;
-        File videoFile = null;
-        File audioFile = null;
 
         try {
-            if (selection.progressiveUrl != null) {
-                destination = createDestination(context, title + ".mp4");
-                if (destination == null) {
-                    throw new IllegalStateException("Could not create MediaStore file");
-                }
+            progress.update(0, "Starting yt-dlp");
 
-                long bytes = downloadToUri(
-                        context, selection.progressiveUrl,
-                        selection.progressiveLength, destination, progress, 0, 95);
+            YoutubeDLRequest request = new YoutubeDLRequest(
+                    "https://www.youtube.com/watch?v=" + videoId);
 
-                publish(context, destination);
-                destination = null;
-                progress.update(100, formatSize(bytes) + " • Download complete");
-                successToast();
-                return;
+            request.addOption("--no-playlist");
+            request.addOption("--no-mtime");
+            request.addOption("--newline");
+            request.addOption("-f",
+                    "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]");
+            request.addOption("--merge-output-format", "mp4");
+            request.addOption("-o",
+                    new File(workDir, "%(title)s.%(ext)s").getAbsolutePath());
+
+            YoutubeDL.getInstance().execute(
+                    request,
+                    processId,
+                    (percent, etaSeconds, line) -> {
+                        int safePercent = percent == null
+                                ? -1
+                                : Math.max(0, Math.min(99, percent.intValue()));
+                        String message = line == null || line.trim().isEmpty()
+                                ? "Downloading"
+                                : line.trim();
+                        progress.update(safePercent, message);
+                        return kotlin.Unit.INSTANCE;
+                    });
+
+            output = findDownloadedMp4(workDir);
+            if (output == null || output.length() <= 0) {
+                throw new IllegalStateException(
+                        "yt-dlp completed without an MP4 output");
             }
 
-            videoFile = new File(
-                    context.getCacheDir(),
-                    "morphe_yt_video_" + System.nanoTime() + ".mp4");
-            audioFile = new File(
-                    context.getCacheDir(),
-                    "morphe_yt_audio_" + System.nanoTime() + ".m4a");
+            progress.update(96, "Saving to Movies/Morphe YouTube");
 
-            downloadToFile(context, selection.videoUrl, selection.videoLength,
-                    videoFile, progress, 5, 55);
-            downloadToFile(context, selection.audioUrl, selection.audioLength,
-                    audioFile, progress, 55, 85);
+            String displayName = sanitizeName(output.getName());
+            destination = createDestination(context, displayName);
 
-            destination = createDestination(context, title + ".mp4");
             if (destination == null) {
-                throw new IllegalStateException("Could not create MediaStore file");
+                throw new IllegalStateException("Could not create MediaStore item");
             }
 
-            progress.update(86, "Muxing video and audio");
-            muxMp4(context, videoFile, audioFile, destination);
-
+            copyToMediaStore(context, output, destination);
             publish(context, destination);
             destination = null;
+
             progress.update(100, "Download complete");
-            successToast();
+            Utils.runOnMainThread(() ->
+                    Utils.showToastShort("Morphe: YouTube download complete"));
         } finally {
-            if (destination != null) deleteDestination(context, destination);
-            deleteQuietly(videoFile);
-            deleteQuietly(audioFile);
+            if (destination != null) {
+                deleteDestination(context, destination);
+            }
+
+            try {
+                YoutubeDL.getInstance().destroyProcessById(processId);
+            } catch (Throwable ex) {
+                Logger.printDebug(() ->
+                        "Could not stop yt-dlp process: " + ex);
+            }
+
+            deleteRecursively(workDir);
         }
     }
 
-    private static Selection resolve(Context context, String videoId) throws Exception {
-        JSONObject root = new JSONObject(requestPlayer(context, videoId));
-        JSONObject details = root.optJSONObject("videoDetails");
-        JSONObject streaming = root.optJSONObject("streamingData");
-        if (streaming == null) return null;
+    private static void ensureEngine(Context context) throws Exception {
+        if (initialized) return;
 
-        String title = details == null
-                ? videoId
-                : details.optString("title", videoId);
+        synchronized (INIT_LOCK) {
+            if (initialized) return;
 
-        JSONObject progressive = bestProgressive(
-                streaming.optJSONArray("formats"));
-        if (progressive != null) {
-            return Selection.progressive(
-                    title,
-                    progressive.optString("url", ""),
-                    progressive.optLong("contentLength", -1));
+            try {
+                YoutubeDL.getInstance().init(context.getApplicationContext());
+                FFmpeg.getInstance().init(context.getApplicationContext());
+                initialized = true;
+            } catch (Throwable ex) {
+                initialized = false;
+                throw ex;
+            }
         }
-
-        JSONObject video = bestVideo(
-                streaming.optJSONArray("adaptiveFormats"));
-        JSONObject audio = bestAudio(
-                streaming.optJSONArray("adaptiveFormats"));
-
-        if (video == null || audio == null) return null;
-
-        return Selection.adaptive(
-                title,
-                video.optString("url", ""),
-                video.optLong("contentLength", -1),
-                audio.optString("url", ""),
-                audio.optLong("contentLength", -1));
     }
 
-    private static JSONObject bestProgressive(JSONArray formats) {
-        if (formats == null) return null;
-        JSONObject best = null;
-        int bestHeight = -1;
-        int bestFps = -1;
-        long bestBitrate = -1;
+    private static File findDownloadedMp4(File workDir) {
+        File[] files = workDir.listFiles();
+        if (files == null) return null;
 
-        for (int i = 0; i < formats.length(); i++) {
-            JSONObject format = formats.optJSONObject(i);
-            if (!isDirectMp4Video(format)) continue;
+        File best = null;
+        for (File file : files) {
+            if (!file.isFile()) continue;
+            if (!file.getName().toLowerCase(Locale.US).endsWith(".mp4")) continue;
 
-            int height = format.optInt("height", 0);
-            int fps = format.optInt("fps", 0);
-            long bitrate = format.optLong("bitrate", 0);
-
-            if (height > bestHeight
-                    || (height == bestHeight && fps > bestFps)
-                    || (height == bestHeight && fps == bestFps
-                    && bitrate > bestBitrate)) {
-                best = format;
-                bestHeight = height;
-                bestFps = fps;
-                bestBitrate = bitrate;
+            if (best == null || file.lastModified() > best.lastModified()) {
+                best = file;
             }
         }
         return best;
-    }
-
-    private static JSONObject bestVideo(JSONArray formats) {
-        return bestProgressive(formats);
-    }
-
-    private static JSONObject bestAudio(JSONArray formats) {
-        if (formats == null) return null;
-        JSONObject best = null;
-        long bestBitrate = -1;
-
-        for (int i = 0; i < formats.length(); i++) {
-            JSONObject format = formats.optJSONObject(i);
-            if (!isDirectMp4Audio(format)) continue;
-
-            long bitrate = format.optLong("bitrate", 0);
-            if (bitrate > bestBitrate) {
-                best = format;
-                bestBitrate = bitrate;
-            }
-        }
-        return best;
-    }
-
-    private static boolean isDirectMp4Video(JSONObject format) {
-        if (format == null) return false;
-        String url = format.optString("url", "");
-        String mime = format.optString("mimeType", "");
-        if (url.isEmpty() || !mime.startsWith("video/mp4")) return false;
-        if (format.has("signatureCipher") || format.has("cipher")
-                || format.has("drmFamilies")) return false;
-
-        String codecs = mimeCodecs(mime);
-        return codecs.isEmpty()
-                || codecs.contains("avc1")
-                || codecs.contains("av01")
-                || codecs.contains("hev1")
-                || codecs.contains("hvc1");
-    }
-
-    private static boolean isDirectMp4Audio(JSONObject format) {
-        if (format == null) return false;
-        String url = format.optString("url", "");
-        String mime = format.optString("mimeType", "");
-        if (url.isEmpty() || !mime.startsWith("audio/mp4")) return false;
-        if (format.has("signatureCipher") || format.has("cipher")
-                || format.has("drmFamilies")) return false;
-
-        String codecs = mimeCodecs(mime);
-        return codecs.isEmpty() || codecs.contains("mp4a");
-    }
-
-    private static String mimeCodecs(String mime) {
-        int start = mime.indexOf("codecs=\"");
-        if (start < 0) return "";
-        start += 8;
-        int end = mime.indexOf('"', start);
-        return end > start ? mime.substring(start, end) : "";
-    }
-
-    private static String requestPlayer(Context context, String videoId) throws Exception {
-        URL url = new URL(
-                "https://youtubei.googleapis.com/youtubei/v1/player"
-                        + "?alt=json&prettyPrint=false");
-
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        connection.setReadTimeout(READ_TIMEOUT_MS);
-        connection.setRequestMethod("POST");
-        connection.setDoOutput(true);
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("X-YouTube-Client-Name", "3");
-        connection.setRequestProperty(
-                "X-YouTube-Client-Version", getYouTubeVersion(context));
-
-        JSONObject client = new JSONObject()
-                .put("clientName", "ANDROID")
-                .put("clientVersion", getYouTubeVersion(context))
-                .put("androidSdkVersion", Build.VERSION.SDK_INT)
-                .put("hl", Locale.getDefault().toLanguageTag());
-
-        JSONObject body = new JSONObject()
-                .put("videoId", videoId)
-                .put("contentCheckOk", true)
-                .put("racyCheckOk", true)
-                .put("context", new JSONObject().put("client", client));
-
-        try {
-            byte[] request = body.toString().getBytes(StandardCharsets.UTF_8);
-            try (OutputStream output = connection.getOutputStream()) {
-                output.write(request);
-            }
-
-            int code = connection.getResponseCode();
-            if (code < 200 || code >= 300) {
-                throw new IllegalStateException("Player request HTTP " + code);
-            }
-
-            try (InputStream input = connection.getInputStream();
-                 java.io.ByteArrayOutputStream output =
-                         new java.io.ByteArrayOutputStream()) {
-                byte[] buffer = new byte[16 * 1024];
-                int read;
-                while ((read = input.read(buffer)) != -1) {
-                    output.write(buffer, 0, read);
-                }
-                return output.toString(StandardCharsets.UTF_8.name());
-            }
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    private static long downloadToUri(
-            Context context, String url, long expectedLength, Uri destination,
-            Progress progress, int start, int end) throws Exception {
-        HttpURLConnection connection = openConnection(url);
-        try {
-            checkResponse(connection);
-            long length = connection.getContentLengthLong();
-            if (length <= 0) length = expectedLength;
-
-            try (InputStream input = new BufferedInputStream(
-                         connection.getInputStream(), BUFFER_SIZE);
-                 OutputStream raw = context.getContentResolver()
-                         .openOutputStream(destination, "w")) {
-                if (raw == null) throw new IllegalStateException(
-                        "Output stream unavailable");
-                return copy(input,
-                        new BufferedOutputStream(raw, BUFFER_SIZE),
-                        length, progress, start, end);
-            }
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    private static void downloadToFile(
-            Context context, String url, long expectedLength, File destination,
-            Progress progress, int start, int end) throws Exception {
-        HttpURLConnection connection = openConnection(url);
-        try {
-            checkResponse(connection);
-            long length = connection.getContentLengthLong();
-            if (length <= 0) length = expectedLength;
-
-            try (InputStream input = new BufferedInputStream(
-                         connection.getInputStream(), BUFFER_SIZE);
-                 OutputStream output = new BufferedOutputStream(
-                         new FileOutputStream(destination), BUFFER_SIZE)) {
-                copy(input, output, length, progress, start, end);
-            }
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    private static HttpURLConnection openConnection(String streamUrl)
-            throws Exception {
-        HttpURLConnection connection =
-                (HttpURLConnection) new URL(streamUrl).openConnection();
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        connection.setReadTimeout(READ_TIMEOUT_MS);
-        connection.setInstanceFollowRedirects(true);
-        connection.setRequestProperty("Accept", "*/*");
-        connection.setRequestProperty("Accept-Encoding", "identity");
-        return connection;
-    }
-
-    private static void checkResponse(HttpURLConnection connection)
-            throws Exception {
-        int code = connection.getResponseCode();
-        if (code < 200 || code >= 300) {
-            throw new IllegalStateException("Media request HTTP " + code);
-        }
-    }
-
-    private static long copy(
-            InputStream input, OutputStream output, long length,
-            Progress progress, int start, int end) throws Exception {
-        try (OutputStream out = output) {
-            byte[] buffer = new byte[BUFFER_SIZE];
-            long copied = 0;
-            long lastUpdate = 0;
-            int read;
-
-            while ((read = input.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
-                copied += read;
-
-                long now = System.currentTimeMillis();
-                if (now - lastUpdate >= 750) {
-                    int percent = length > 0
-                            ? start + (int) Math.min(
-                                    end - start - 1,
-                                    copied * (end - start) / length)
-                            : -1;
-                    progress.update(percent, "Downloading");
-                    lastUpdate = now;
-                }
-            }
-            return copied;
-        }
     }
 
     private static Uri createDestination(Context context, String name) {
         ContentValues values = new ContentValues();
-        values.put(MediaStore.Video.Media.DISPLAY_NAME, name);
+        values.put(
+                MediaStore.Video.Media.DISPLAY_NAME,
+                name.endsWith(".mp4") ? name : name + ".mp4");
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
 
         if (Build.VERSION.SDK_INT >= 29) {
@@ -384,10 +165,32 @@ final class YouTubeDownloadJob {
 
         try {
             return context.getContentResolver().insert(
-                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    values);
         } catch (Throwable ex) {
             Logger.printException(() -> "MediaStore insert failed", ex);
             return null;
+        }
+    }
+
+    private static void copyToMediaStore(
+            Context context,
+            File source,
+            Uri destination) throws Exception {
+        try (FileInputStream input = new FileInputStream(source);
+             OutputStream output =
+                     context.getContentResolver().openOutputStream(
+                             destination, "w")) {
+            if (output == null) {
+                throw new IllegalStateException(
+                        "MediaStore output stream unavailable");
+            }
+
+            byte[] buffer = new byte[64 * 1024];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
         }
     }
 
@@ -399,6 +202,7 @@ final class YouTubeDownloadJob {
 
         int updated = context.getContentResolver().update(
                 destination, values, null, null);
+
         if (updated <= 0) {
             throw new IllegalStateException(
                     "MediaStore publish did not update target row");
@@ -407,186 +211,42 @@ final class YouTubeDownloadJob {
 
     private static void deleteDestination(Context context, Uri destination) {
         try {
-            context.getContentResolver().delete(destination, null, null);
+            context.getContentResolver().delete(
+                    destination, null, null);
         } catch (Throwable ignored) {
         }
     }
 
-    private static void muxMp4(
-            Context context, File videoFile, File audioFile, Uri destination)
-            throws Exception {
-        MediaExtractor videoExtractor = new MediaExtractor();
-        MediaExtractor audioExtractor = new MediaExtractor();
-        android.os.ParcelFileDescriptor pfd = null;
-        MediaMuxer muxer = null;
-        boolean started = false;
+    private static String sanitizeName(String value) {
+        String result = value == null
+                ? "YouTube video.mp4"
+                : value.replaceAll("[\\/:*?\"<>|]", "_")
+                        .replaceAll("\\s+", " ")
+                        .trim();
 
-        try {
-            videoExtractor.setDataSource(videoFile.getAbsolutePath());
-            audioExtractor.setDataSource(audioFile.getAbsolutePath());
-
-            int videoTrack = findTrack(videoExtractor, "video/");
-            int audioTrack = findTrack(audioExtractor, "audio/");
-            if (videoTrack < 0 || audioTrack < 0) {
-                throw new IllegalStateException(
-                        "Downloaded streams do not contain expected tracks");
-            }
-
-            MediaFormat videoFormat =
-                    videoExtractor.getTrackFormat(videoTrack);
-            MediaFormat audioFormat =
-                    audioExtractor.getTrackFormat(audioTrack);
-
-            videoExtractor.selectTrack(videoTrack);
-            audioExtractor.selectTrack(audioTrack);
-
-            pfd = context.getContentResolver()
-                    .openFileDescriptor(destination, "w");
-            if (pfd == null) throw new IllegalStateException(
-                    "Could not open MediaStore output");
-
-            muxer = new MediaMuxer(
-                    pfd.getFileDescriptor(),
-                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-
-            int outVideo = muxer.addTrack(videoFormat);
-            int outAudio = muxer.addTrack(audioFormat);
-            muxer.start();
-            started = true;
-
-            copyTrack(videoExtractor, muxer, outVideo);
-            copyTrack(audioExtractor, muxer, outAudio);
-
-            muxer.stop();
-            started = false;
-        } finally {
-            if (started && muxer != null) {
-                try { muxer.stop(); } catch (Throwable ignored) { }
-            }
-            if (muxer != null) {
-                try { muxer.release(); } catch (Throwable ignored) { }
-            }
-            if (pfd != null) {
-                try { pfd.close(); } catch (Throwable ignored) { }
-            }
-            videoExtractor.release();
-            audioExtractor.release();
+        if (result.isEmpty()) result = "YouTube video.mp4";
+        if (!result.toLowerCase(Locale.US).endsWith(".mp4")) {
+            result += ".mp4";
         }
-    }
 
-    private static int findTrack(MediaExtractor extractor, String prefix) {
-        for (int i = 0; i < extractor.getTrackCount(); i++) {
-            MediaFormat format = extractor.getTrackFormat(i);
-            String mime = format.getString(MediaFormat.KEY_MIME);
-            if (mime != null && mime.startsWith(prefix)) return i;
-        }
-        return -1;
-    }
-
-    private static void copyTrack(
-            MediaExtractor extractor, MediaMuxer muxer, int outputTrack) {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
-        MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-
-        while (true) {
-            int size = extractor.readSampleData(buffer, 0);
-            if (size < 0) break;
-
-            info.offset = 0;
-            info.size = size;
-            info.presentationTimeUs =
-                    Math.max(0, extractor.getSampleTime());
-            info.flags = extractor.getSampleFlags();
-
-            muxer.writeSampleData(outputTrack, buffer, info);
-            extractor.advance();
-            buffer.clear();
-        }
-    }
-
-    private static String getYouTubeVersion(Context context) {
-        try {
-            android.content.pm.PackageInfo info =
-                    context.getPackageManager().getPackageInfo(
-                            "com.google.android.youtube", 0);
-            if (info.versionName != null && !info.versionName.isEmpty()) {
-                return info.versionName;
-            }
-        } catch (Throwable ex) {
-            Logger.printDebug(() ->
-                    "Could not read YouTube version: " + ex);
-        }
-        return "21.38.123";
-    }
-
-    private static String sanitize(String value) {
-        String result = value == null ? "" : value
-                .replaceAll("[\\/:*?\"<>|]", "_")
-                .replaceAll("\\s+", " ")
-                .trim();
-        if (result.isEmpty()) result = "YouTube video";
-        return result.length() > 120
-                ? result.substring(0, 120).trim()
+        return result.length() > 140
+                ? result.substring(0, 136) + ".mp4"
                 : result;
     }
 
-    private static String formatSize(long bytes) {
-        if (bytes < 1024) return bytes + " B";
-        if (bytes < 1024L * 1024) return (bytes / 1024) + " KB";
-        if (bytes < 1024L * 1024 * 1024) {
-            return String.format(Locale.US, "%.1f MB",
-                    bytes / (1024d * 1024d));
-        }
-        return String.format(Locale.US, "%.2f GB",
-                bytes / (1024d * 1024d * 1024d));
-    }
+    private static void deleteRecursively(File file) {
+        if (file == null || !file.exists()) return;
 
-    private static void successToast() {
-        try {
-            Utils.runOnMainThread(() ->
-                    Utils.showToastShort("Morphe: YouTube download complete"));
-        } catch (Throwable ex) {
-            Logger.printException(() -> "Download toast failed", ex);
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                deleteRecursively(child);
+            }
         }
-    }
 
-    private static void deleteQuietly(File file) {
-        if (file == null) return;
         try {
-            if (file.exists()) file.delete();
+            file.delete();
         } catch (Throwable ignored) {
-        }
-    }
-
-    private static final class Selection {
-        final String title;
-        final String progressiveUrl;
-        final long progressiveLength;
-        final String videoUrl;
-        final long videoLength;
-        final String audioUrl;
-        final long audioLength;
-
-        private Selection(String title, String progressiveUrl, long progressiveLength,
-                          String videoUrl, long videoLength,
-                          String audioUrl, long audioLength) {
-            this.title = title;
-            this.progressiveUrl = progressiveUrl;
-            this.progressiveLength = progressiveLength;
-            this.videoUrl = videoUrl;
-            this.videoLength = videoLength;
-            this.audioUrl = audioUrl;
-            this.audioLength = audioLength;
-        }
-
-        static Selection progressive(String title, String url, long length) {
-            return new Selection(title, url, length, null, -1, null, -1);
-        }
-
-        static Selection adaptive(String title, String videoUrl, long videoLength,
-                                  String audioUrl, long audioLength) {
-            return new Selection(title, null, -1, videoUrl, videoLength,
-                    audioUrl, audioLength);
         }
     }
 }
