@@ -37,10 +37,19 @@ import app.morphe.extension.shared.Utils;
  * re-encoding. Ciphered and DRM-protected streams are intentionally excluded.
  */
 final class AdvancedDownloads {
-    private static final int TIMEOUT = 30_000;
+    private static final int TIMEOUT = 8_000;
     private static final int BUFFER = 64 * 1024;
 
     private AdvancedDownloads() {}
+
+    static boolean canHandle(String videoId) {
+        try {
+            return resolve(videoId, Utils.getContext()) != null;
+        } catch (Exception e) {
+            Logger.printDebug(() -> "YouTube direct-stream preflight unavailable: " + e);
+            return false;
+        }
+    }
 
     static boolean download(String videoId) {
         Context context = Utils.getContext();
