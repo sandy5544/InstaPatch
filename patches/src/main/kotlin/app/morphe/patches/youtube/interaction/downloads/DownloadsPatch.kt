@@ -10,8 +10,8 @@ private const val EXTENSION_CLASS =
 @Suppress("unused")
 val youtubeInAppDownloadsPatch = bytecodePatch(
     name = "YouTube In-App Downloads",
-    description = "Adds an experimental in-app download action to YouTube with adaptive video + audio downloads. " +
-        "Protected, ciphered, and entitlement-gated streams remain on YouTube's native offline/DRM path."
+    description = "Adds an experimental in-app download action using a background direct MP4 downloader. " +
+        "Protected, ciphered, and entitlement-gated streams are not handled by the custom downloader."
 ) {
     compatibleWith(COMPATIBILITY_YOUTUBE)
 
