@@ -93,9 +93,15 @@ public final class DownloadsPatch {
         }
 
         try {
+            Selection selection = resolve(videoId);
+            if (selection == null) {
+                safeToast("Morphe: stream is not supported by the local downloader");
+                return false;
+            }
+
             EXECUTOR.execute(() -> {
                 try {
-                    download(videoId);
+                    download(videoId, selection);
                 } catch (Throwable ex) {
                     Logger.printException(
                             () -> "YouTube download worker crashed", ex);
@@ -112,7 +118,7 @@ public final class DownloadsPatch {
         }
     }
 
-    private static void download(String videoId) {
+    private static void download(String videoId, Selection selection) {
         Context context = Utils.getContext();
         if (context == null) {
             throw new IllegalStateException("Morphe context is unavailable");
@@ -125,12 +131,6 @@ public final class DownloadsPatch {
         int notificationId = NEXT_NOTIFICATION_ID.getAndIncrement();
 
         try {
-            Selection selection = resolve(videoId);
-            if (selection == null) {
-                throw new UnsupportedOperationException(
-                        "No supported direct unprotected MP4 stream");
-            }
-
             title = sanitize(selection.title);
             post(context, notificationId, title, 0, true, "Preparing");
 
@@ -816,9 +816,15 @@ public final class DownloadsPatch {
         }
 
         try {
+            Selection selection = resolve(videoId);
+            if (selection == null) {
+                safeToast("Morphe: stream is not supported by the local downloader");
+                return false;
+            }
+
             EXECUTOR.execute(() -> {
                 try {
-                    download(videoId);
+                    download(videoId, selection);
                 } catch (Throwable ex) {
                     Logger.printException(
                             () -> "YouTube download worker crashed", ex);
@@ -835,7 +841,7 @@ public final class DownloadsPatch {
         }
     }
 
-    private static void download(String videoId) {
+    private static void download(String videoId, Selection selection) {
         Context context = Utils.getContext();
         if (context == null) {
             throw new IllegalStateException("Morphe context is unavailable");
@@ -848,12 +854,6 @@ public final class DownloadsPatch {
         int notificationId = NEXT_NOTIFICATION_ID.getAndIncrement();
 
         try {
-            Selection selection = resolve(videoId);
-            if (selection == null) {
-                throw new UnsupportedOperationException(
-                        "No supported direct unprotected MP4 stream");
-            }
-
             title = sanitize(selection.title);
             post(context, notificationId, title, 0, true, "Preparing");
 
