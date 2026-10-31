@@ -31,3 +31,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :patches:buildAndroid --no-daemon
+
+      - name: Generate Morphe patch metadata
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :patches:generatePatchesList --no-daemon
+
+      - name: Upload patch build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: force-opus-morphe-build
+          path: |
+            patches/build/libs/*
+            patches-list.json
+
