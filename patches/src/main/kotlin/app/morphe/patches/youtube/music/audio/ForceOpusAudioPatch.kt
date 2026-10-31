@@ -288,10 +288,6 @@ val forceOpusAudioPatch = bytecodePatch(
                 move-result-object v$codecOrEnum
                 sget-object v$opusEnum, Lwgr;->b:Lwgr;
                 if-ne v$codecOrEnum, v$opusEnum, :force_opus_candidate_not_opus
-                invoke-virtual { v$currentWrapperOrCodec }, Lwgs;->z()Ljava/lang/String;
-                move-result-object v$currentWrapperOrCodec
-                invoke-static { v$currentWrapperOrCodec }, Lwgs;->p(Ljava/lang/String;)Lwgr;
-                move-result-object v$currentWrapperOrCodec
                 if-ne v$currentWrapperOrCodec, v$opusEnum, :force_opus_candidate_wins
                 goto :force_opus_done
                 :force_opus_candidate_wins
