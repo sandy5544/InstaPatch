@@ -9,6 +9,8 @@ import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ThreeRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
@@ -133,9 +135,12 @@ val forceOpusAudioPatch = bytecodePatch(
         // The selected wrapper is Lyon.b. Verify the exact field before emitting
         // the injected instructions rather than assuming the obfuscation mapping.
         val lyonClass = classDefBy("Lyon;")
-        check(lyonClass.fields.any {
+        val lyonWrapperField = lyonClass.fields.singleOrNull {
             it.name == "b" && it.type == "Lwgs;"
-        }) { "Selected Lyon audio-wrapper field not found." }
+        } ?: error("Selected Lyon audio-wrapper field not found or ambiguous.")
+        check(!AccessFlags.STATIC.isSet(lyonWrapperField.accessFlags)) {
+            "Selected Lyon wrapper field is no longer an instance field."
+        }
 
         // The injected read originates in Lyop.n, not Lyon itself. Make the
         // wrapper field accessible just as other Morphe patches do for bridges.
@@ -149,17 +154,26 @@ val forceOpusAudioPatch = bytecodePatch(
         )
 
         val lwgsClass = classDefBy("Lwgs;")
-        check(lwgsClass.methods.any {
+        val codecStringAccessor = lwgsClass.methods.singleOrNull {
             it.name == "z" && it.parameterTypes.isEmpty() && it.returnType == "Ljava/lang/String;"
-        }) { "Lwgs codec-string accessor not found." }
-        check(lwgsClass.methods.any {
+        } ?: error("Lwgs codec-string accessor not found or ambiguous.")
+        check(!AccessFlags.STATIC.isSet(codecStringAccessor.accessFlags)) {
+            "Lwgs codec-string accessor is no longer an instance method."
+        }
+        val codecClassifier = lwgsClass.methods.singleOrNull {
             it.name == "p" &&
                 it.parameterTypes.map { type -> type.toString() } == listOf("Ljava/lang/String;") &&
                 it.returnType == "Lwgr;"
-        }) { "Lwgs codec classifier not found." }
-        check(classDefBy("Lwgr;").fields.any {
+        } ?: error("Lwgs codec classifier not found or ambiguous.")
+        check(AccessFlags.STATIC.isSet(codecClassifier.accessFlags)) {
+            "Lwgs codec classifier is no longer static."
+        }
+        val opusEnumField = classDefBy("Lwgr;").fields.singleOrNull {
             it.name == "b" && it.type == "Lwgr;"
-        }) { "Opus enum constant Lwgr.b not found." }
+        } ?: error("Opus enum constant Lwgr.b not found or ambiguous.")
+        check(AccessFlags.STATIC.isSet(opusEnumField.accessFlags)) {
+            "Lwgr.b is no longer a static enum constant."
+        }
 
         val resultMoveIndex = compareIndex + 1
         val branchIndex = compareIndex + 2
@@ -186,8 +200,49 @@ val forceOpusAudioPatch = bytecodePatch(
         check(temp + 2 < registerCount) {
             "Insufficient existing local registers for the guarded Opus comparison."
         }
-        check(temp > maxOf(candidateWrapperRegister, currentGroupRegister, resultRegister)) {
-            "Unexpected register overlap at the audio selection site."
+        check(
+            registerCount == 35 &&
+                temp == 12 &&
+                candidateWrapperRegister == 7 &&
+                currentGroupRegister == 10 &&
+                resultRegister == 11
+        ) {
+            "Lyop.n register layout differs from the inspected YouTube Music 9.42.52 APK."
+        }
+
+        // v15 is live later in Lyop.n. v13 and v14 are reused only after their
+        // original values have become dead; fail closed if either register is
+        // read before the original method first overwrites it.
+        fun touchesRegister(instruction: com.android.tools.smali.dexlib2.iface.instruction.Instruction, register: Int): Boolean =
+            when (instruction) {
+                is FiveRegisterInstruction -> listOf(
+                    instruction.registerC, instruction.registerD, instruction.registerE,
+                    instruction.registerF, instruction.registerG
+                ).take(instruction.registerCount).contains(register)
+                is RegisterRangeInstruction ->
+                    register >= instruction.startRegister &&
+                        register < instruction.startRegister + instruction.registerCount
+                is ThreeRegisterInstruction ->
+                    instruction.registerA == register ||
+                        instruction.registerB == register ||
+                        instruction.registerC == register
+                is TwoRegisterInstruction ->
+                    instruction.registerA == register || instruction.registerB == register
+                is OneRegisterInstruction -> instruction.registerA == register
+                else -> false
+            }
+
+        for (register in (temp + 1)..(temp + 2)) {
+            val firstTouchIndex = code.indices.firstOrNull { index ->
+                index >= branchIndex && touchesRegister(code[index], register)
+            } ?: error("Temporary register v$register is never redefined after the selection branch.")
+            val firstTouch = code[firstTouchIndex]
+            check(
+                firstTouch.opcode == Opcode.MOVE_OBJECT &&
+                    (firstTouch as? TwoRegisterInstruction)?.registerA == register
+            ) {
+                "Temporary register v$register is read or reused before its original value is overwritten."
+            }
         }
 
         val currentWrapperOrCodec = temp
