@@ -183,43 +183,42 @@ val forceOpusAudioPatch = bytecodePatch(
         val temp = currentQualityRead.registerA
         val registerCount = method.implementation?.registerCount
             ?: error("Lyop.n has no implementation.")
-        check(temp + 3 < registerCount) {
+        check(temp + 2 < registerCount) {
             "Insufficient existing local registers for the guarded Opus comparison."
         }
         check(temp > maxOf(candidateWrapperRegister, currentGroupRegister, resultRegister)) {
             "Unexpected register overlap at the audio selection site."
         }
 
-        val currentWrapper = temp
+        val currentWrapperOrCodec = temp
         val codecOrEnum = temp + 1
         val opusEnum = temp + 2
-        val currentCodecOrEnum = temp + 3
 
         method.addInstructions(
             branchIndex,
             """
-                iget-object v$currentWrapper, v$currentGroupRegister, Lyon;->b:Lwgs;
+                iget-object v$currentWrapperOrCodec, v$currentGroupRegister, Lyon;->b:Lwgs;
                 invoke-virtual { v$candidateWrapperRegister }, Lwgs;->z()Ljava/lang/String;
                 move-result-object v$codecOrEnum
                 invoke-static { v$codecOrEnum }, Lwgs;->p(Ljava/lang/String;)Lwgr;
                 move-result-object v$codecOrEnum
                 sget-object v$opusEnum, Lwgr;->b:Lwgr;
                 if-ne v$codecOrEnum, v$opusEnum, :force_opus_candidate_not_opus
-                invoke-virtual { v$currentWrapper }, Lwgs;->z()Ljava/lang/String;
-                move-result-object v$currentCodecOrEnum
-                invoke-static { v$currentCodecOrEnum }, Lwgs;->p(Ljava/lang/String;)Lwgr;
-                move-result-object v$currentCodecOrEnum
-                if-ne v$currentCodecOrEnum, v$opusEnum, :force_opus_candidate_wins
+                invoke-virtual { v$currentWrapperOrCodec }, Lwgs;->z()Ljava/lang/String;
+                move-result-object v$currentWrapperOrCodec
+                invoke-static { v$currentWrapperOrCodec }, Lwgs;->p(Ljava/lang/String;)Lwgr;
+                move-result-object v$currentWrapperOrCodec
+                if-ne v$currentWrapperOrCodec, v$opusEnum, :force_opus_candidate_wins
                 goto :force_opus_done
                 :force_opus_candidate_wins
                 const/4 v$resultRegister, 0x1
                 goto :force_opus_done
                 :force_opus_candidate_not_opus
-                invoke-virtual { v$currentWrapper }, Lwgs;->z()Ljava/lang/String;
-                move-result-object v$currentCodecOrEnum
-                invoke-static { v$currentCodecOrEnum }, Lwgs;->p(Ljava/lang/String;)Lwgr;
-                move-result-object v$currentCodecOrEnum
-                if-ne v$currentCodecOrEnum, v$opusEnum, :force_opus_done
+                invoke-virtual { v$currentWrapperOrCodec }, Lwgs;->z()Ljava/lang/String;
+                move-result-object v$currentWrapperOrCodec
+                invoke-static { v$currentWrapperOrCodec }, Lwgs;->p(Ljava/lang/String;)Lwgr;
+                move-result-object v$currentWrapperOrCodec
+                if-ne v$currentWrapperOrCodec, v$opusEnum, :force_opus_done
                 const/4 v$resultRegister, -0x1
                 :force_opus_done
                 nop
