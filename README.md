@@ -1,6 +1,6 @@
 # ☔ InstaPatch
 
-A focused Morphe patch source containing one Instagram patch.
+A focused Morphe patch source for Instagram and YouTube Music.
 
 ## ⚙️ Patch Details
 
@@ -34,3 +34,14 @@ Install the Morphe manager from [their website](https://morphe.software/), then 
 ## Patch included
 
 **Disable DM pull-to-refresh** disables the pull-to-refresh gesture in Instagram Direct Messages only. Feed, Reels, and other Instagram refresh behavior are not intentionally modified.
+
+
+## YouTube Music patch
+
+**Force Opus audio codec** prefers Opus over AAC or other codecs within each existing audio group, while preserving the original quality fallback when the codec is the same.
+
+Supported YouTube Music version:
+
+- YouTube Music `9.42.52` (`com.google.android.apps.youtube.music`)
+
+The patch is currently under review in [PR #17](https://github.com/sandy5544/InstaPatch/pull/17). Build and on-device playback validation are pending.

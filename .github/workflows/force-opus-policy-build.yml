@@ -1,0 +1,47 @@
+name: Force Opus policy build
+
+on:
+  push:
+    branches:
+      - feature/force-opus-youtube-music
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+    name: Compile Morphe patch source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: burrunan/gradle-cache-action@v3
+
+      - name: Build patch module
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :patches:buildAndroid --no-daemon
+
+      - name: Generate Morphe patch metadata
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :patches:generatePatchesList --no-daemon
+
+      - name: Upload patch build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: force-opus-morphe-build
+          path: |
+            patches/build/libs/*
+            patches-list.json
+
