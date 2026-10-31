@@ -4,6 +4,7 @@ import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.util.proxy.mutableTypes.MutableField.Companion.toMutable
 import app.morphe.patches.Constants.COMPATIBILITY_YOUTUBE_MUSIC
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
@@ -15,6 +16,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import com.android.tools.smali.dexlib2.immutable.ImmutableField
 
 private const val SELECTABLE_FORMATS =
     "Lcom/google/android/apps/youtube/proto/streaming/SelectableFormatsOuterClass\$SelectableFormats;"
@@ -132,25 +134,53 @@ val forceOpusAudioPatch = bytecodePatch(
         }
         val currentGroupRegister = currentQualityRead.registerB
 
-        // The selected wrapper is Lyon.b. Verify the exact field before emitting
-        // the injected instructions rather than assuming the obfuscation mapping.
-        val lyonClass = classDefBy("Lyon;")
-        val lyonWrapperField = lyonClass.fields.singleOrNull {
-            it.name == "b" && it.type == "Lwgs;"
-        } ?: error("Selected Lyon audio-wrapper field not found or ambiguous.")
-        check(!AccessFlags.STATIC.isSet(lyonWrapperField.accessFlags)) {
-            "Selected Lyon wrapper field is no longer an instance field."
+        // Lyon.b is the first wrapper in the group and is also used by
+        // Lyon.compareTo() for stable group ordering. It is NOT the current
+        // best candidate after later quality replacements. Track the selected
+        // codec separately instead of reading or mutating Lyon.b.
+        val lyonClass = mutableClassDefBy("Lyon;")
+        check(lyonClass.fields.none { it.name == "patch_codec" }) {
+            "Force Opus state field already exists; refusing duplicate injection."
         }
+        lyonClass.fields.add(
+            ImmutableField(
+                "Lyon;",
+                "patch_codec",
+                "Lwgr;",
+                0,
+                null,
+                null,
+                null
+            ).toMutable()
+        )
 
-        // Lyop and Lyon are both in the default DEX package. Lyon.b is
-        // package-private, so the injected access is legal without mutating
-        // the target app's field visibility.
-        check(
-            !AccessFlags.PRIVATE.isSet(lyonWrapperField.accessFlags) &&
-                !AccessFlags.PROTECTED.isSet(lyonWrapperField.accessFlags)
-        ) {
-            "Lyon.b is no longer package-accessible from Lyop."
+        val lyonConstructor = lyonClass.methods.singleOrNull {
+            it.name == "<init>" && it.parameterTypes.map { type -> type.toString() } == listOf("Lwgs;")
+        } ?: error("Lyon(Lwgs;) constructor not found or ambiguous.")
+        check(lyonConstructor.implementation?.registerCount == 4) {
+            "Lyon constructor register layout changed."
         }
+        val constructorCode = lyonConstructor.instructions.toList()
+        val wrapperStoreIndices = constructorCode.indices.filter { index ->
+            val field = (constructorCode[index] as? ReferenceInstruction)?.reference as? FieldReference
+            constructorCode[index].opcode == Opcode.IPUT_OBJECT &&
+                field?.definingClass == "Lyon;" &&
+                field.name == "b" &&
+                field.type == "Lwgs;"
+        }
+        check(wrapperStoreIndices.size == 1) {
+            "Expected one Lyon.b constructor assignment, found ${wrapperStoreIndices.size}."
+        }
+        lyonConstructor.addInstructionsWithLabels(
+            wrapperStoreIndices.single() + 1,
+            """
+                invoke-virtual { p1 }, Lwgs;->z()Ljava/lang/String;
+                move-result-object v0
+                invoke-static { v0 }, Lwgs;->p(Ljava/lang/String;)Lwgr;
+                move-result-object v0
+                iput-object v0, p0, Lyon;->patch_codec:Lwgr;
+            """
+        )
 
         val lwgsClass = classDefBy("Lwgs;")
         val codecStringAccessor = lwgsClass.methods.singleOrNull {
@@ -251,7 +281,7 @@ val forceOpusAudioPatch = bytecodePatch(
         method.addInstructionsWithLabels(
             branchIndex,
             """
-                iget-object v$currentWrapperOrCodec, v$currentGroupRegister, Lyon;->b:Lwgs;
+                iget-object v$currentWrapperOrCodec, v$currentGroupRegister, Lyon;->patch_codec:Lwgr;
                 invoke-virtual { v$candidateWrapperRegister }, Lwgs;->z()Ljava/lang/String;
                 move-result-object v$codecOrEnum
                 invoke-static { v$codecOrEnum }, Lwgs;->p(Ljava/lang/String;)Lwgr;
@@ -265,13 +295,10 @@ val forceOpusAudioPatch = bytecodePatch(
                 if-ne v$currentWrapperOrCodec, v$opusEnum, :force_opus_candidate_wins
                 goto :force_opus_done
                 :force_opus_candidate_wins
+                iput-object v$codecOrEnum, v$currentGroupRegister, Lyon;->patch_codec:Lwgr;
                 const/4 v$resultRegister, 0x1
                 goto :force_opus_done
                 :force_opus_candidate_not_opus
-                invoke-virtual { v$currentWrapperOrCodec }, Lwgs;->z()Ljava/lang/String;
-                move-result-object v$currentWrapperOrCodec
-                invoke-static { v$currentWrapperOrCodec }, Lwgs;->p(Ljava/lang/String;)Lwgr;
-                move-result-object v$currentWrapperOrCodec
                 if-ne v$currentWrapperOrCodec, v$opusEnum, :force_opus_done
                 const/4 v$resultRegister, -0x1
                 :force_opus_done
