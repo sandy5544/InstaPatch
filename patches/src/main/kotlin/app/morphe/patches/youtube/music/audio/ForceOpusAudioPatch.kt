@@ -5,6 +5,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.Constants.COMPATIBILITY_YOUTUBE_MUSIC
+import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
@@ -135,6 +136,17 @@ val forceOpusAudioPatch = bytecodePatch(
         check(lyonClass.fields.any {
             it.name == "b" && it.type == "Lwgs;"
         }) { "Selected Lyon audio-wrapper field not found." }
+
+        // The injected read originates in Lyop.n, not Lyon itself. Make the
+        // wrapper field accessible just as other Morphe patches do for bridges.
+        val mutableLyonClass = mutableClassDefBy("Lyon;")
+        val wrapperField = mutableLyonClass.fields.first {
+            it.name == "b" && it.type == "Lwgs;"
+        }
+        val restrictedFlags = AccessFlags.PRIVATE.value or AccessFlags.PROTECTED.value
+        wrapperField.setAccessFlags(
+            (wrapperField.accessFlags and restrictedFlags.inv()) or AccessFlags.PUBLIC.value
+        )
 
         val lwgsClass = classDefBy("Lwgs;")
         check(lwgsClass.methods.any {
