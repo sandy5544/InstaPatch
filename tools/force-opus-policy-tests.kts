@@ -18,6 +18,18 @@ run {
     assertEquals(listOf("Opus-Low"), selected.map { it.value }, "Opus preference")
 }
 
+// Once Opus has appeared, a later higher-quality AAC candidate must not displace it.
+run {
+    val selected = OpusPreference.selectPerGroup(
+        listOf(
+            candidate("en", "mp4a.40.2", 8, "AAC-First"),
+            candidate("en", "opus", 5, "Opus-Winner"),
+            candidate("en", "mp4a.40.2", 10, "AAC-Later"),
+        )
+    )
+    assertEquals(listOf("Opus-Winner"), selected.map { it.value }, "Opus remains preferred")
+}
+
 // Quality ranking remains active among Opus candidates.
 run {
     val selected = OpusPreference.selectPerGroup(
