@@ -14,13 +14,15 @@ Within each existing audio-format group:
 4. Keep groups independent so alternate languages and commentary tracks are not collapsed.
 5. Never modify the video-format list or the global codec classifier.
 
-The pure selection policy is implemented in:
+The selection policy is also expressed as a small, pure reference model in:
 
 `patches/src/main/kotlin/app/morphe/patches/youtube/music/audio/OpusPreference.kt`
 
-A small policy test script is provided at:
+A standalone policy-model test script is provided at:
 
 `tools/force-opus-policy-tests.kts`
+
+The runtime bytecode hook implements the same decisions directly in the target methods. The reference model is not called by the injected bytecode, and its script is not currently part of CI.
 
 ## Integration status
 
