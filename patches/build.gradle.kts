@@ -3,7 +3,7 @@ group = "app.instapatch"
 patches {
     about {
         name = "InstaPatch"
-        description = "Instagram DM pull-to-refresh patch"
+        description = "Instagram and YouTube Music patches"
         source = "git@github.com:sandy5544/InstaPatch.git"
         author = "sandy5544"
         contact = ""
