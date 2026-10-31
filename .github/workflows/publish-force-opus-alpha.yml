@@ -1,0 +1,53 @@
+name: Publish Force Opus experimental build
+
+on:
+  push:
+    branches:
+      - feature/force-opus-youtube-music
+    paths:
+      - .github/workflows/publish-force-opus-alpha.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  build-and-publish:
+    name: Build and publish YouTube Music Force Opus alpha
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: burrunan/gradle-cache-action@v3
+
+      - name: Build Morphe patch bundle
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :patches:buildAndroid generatePatchesList --no-daemon
+
+      - name: Publish experimental release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: force-opus-ytmusic-9.42.52-alpha.1
+          name: Force Opus for YouTube Music 9.42.52 (Experimental)
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: patches/build/libs/patches-*.mpp
+          body: |
+            Experimental Morphe patch bundle for YouTube Music 9.42.52.
+
+            - Prefers Opus over non-Opus candidates within each existing audio group.
+            - Tracks the actual winning codec separately, preserving Lyon.b group sorting.
+            - Keeps the original quality comparison when both candidates are Opus or both are non-Opus.
+            - Opt-in by default; the patch is not enabled automatically.
+
+            **Validation status:** Morphe patch source compilation and patch metadata generation passed. Applying this bundle to the target APK, DEX verification after patching, and real playback tests have not yet been completed. Treat this as an alpha test build, not a stable release.
