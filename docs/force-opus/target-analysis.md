@@ -10,7 +10,7 @@ DEX file: `classes4.dex`
 
 `Lyop.n(Lyoc;, Lwiu;, Laxo;, List, List, SelectableFormats, MediaCapabilities, Z, Z, Z, Z, Z, Z, Z):Lyop;`
 
-The method has 35 registers and 14 incoming register words in the inspected APK.
+The method has 35 registers, 14 incoming register words, 19 outgoing register words, and 1,454 code units in the inspected APK. The code item was parsed directly from `classes4.dex`; the offsets below are code-unit offsets, not instruction-list indices.
 
 ## Audio-only path
 
@@ -38,10 +38,13 @@ At the comparison site in the inspected build:
 
 - Candidate `Lwgs` wrapper is in `v7`.
 - The retained `Lyon` group object is in `v10`.
-- The comparison result is in `v11`.
-- The retained quality read is in `v12`.
+- Candidate quality is returned in `v11`.
+- Retained quality is read into `v12`.
+- `compareTo` returns its integer result in `v11`.
 
-The patch derives these registers from the instruction references and validates the compare/result/branch sequence before injection. It reuses `v12-v15` as temporaries. The quality result register is overridden only when candidate and retained codecs differ in Opus status.
+A deeper register-liveness pass found that `v15` is used later in the same method (at code-unit offset `0x02eb`). An earlier draft of the hook reused `v15`, which would have corrupted a later operation. That register is now deliberately excluded.
+
+The current hook uses only `v12-v14`. The original value in `v12` is consumed by `compareTo`; the first subsequent uses of `v13` and `v14` in the original instruction stream are writes at `0x05a1` and `0x05a2`, respectively. The source now checks the first-touch instruction for those registers and fails closed if either is read before being overwritten. It also asserts the target method's register count and key register assignments.
 
 ## Injected decision
 
@@ -49,8 +52,10 @@ The patch derives these registers from the instruction references and validates 
 - Candidate non-Opus, retained Opus: set compare result to negative, preserving the retained candidate.
 - Both Opus or both non-Opus: leave the original compare result untouched.
 
-Codec identification reuses `Lwgs.z()`, `Lwgs.p(String)`, and `Lwgr.b` (the Opus enum constant). The patch does not modify `Lwgs.p()` itself.
+Codec identification reuses `Lwgs.z()`, `Lwgs.p(String)`, and `Lwgr.b` (the Opus enum constant). Direct DEX access-flag inspection confirms `z()` is an instance method, `p(String)` is static, and `Lwgr.b` is a static enum field. `Lyon.b` is a package-private instance field, and both `Lyop` and `Lyon` are in the default DEX package. The hook therefore reads it without changing field visibility. The patch does not modify `Lwgs.p()` itself.
 
 ## Validation limits
 
-These anchors were statically inspected in the target APK. The Morphe patch must still compile, apply to the APK, pass DEX verification, and be tested during actual playback. The source guards intentionally abort if the target method shape differs.
+The selection block, register assignments, relevant access flags, and temporary-register liveness were checked against the original APK's raw DEX code item. The Morphe patch module compiles and the generated `.mpp` bundle includes the patch metadata.
+
+Still outstanding: applying this patch bundle to the exact APK, verifying the resulting DEX with the Morphe patcher, and testing actual playback. Compilation and patch-list generation do not prove that the injected smali assembles or that playback selects Opus. The source guards intentionally abort if the inspected method shape differs.
