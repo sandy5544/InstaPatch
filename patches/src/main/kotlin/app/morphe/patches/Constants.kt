@@ -5,6 +5,12 @@ import app.morphe.patcher.patch.Compatibility
 import app.morphe.patcher.patch.SupportedAbi
 
 object Constants {
+    val COMPATIBILITY_YOUTUBE_MUSIC = Compatibility(
+        name = "YouTube Music",
+        packageName = "com.google.android.apps.youtube.music",
+        targets = listOf(AppTarget(version = "9.42.52"))
+    )
+
     val COMPATIBILITY_INSTAGRAM = Compatibility(
         name = "Instagram",
         packageName = "com.instagram.android",
