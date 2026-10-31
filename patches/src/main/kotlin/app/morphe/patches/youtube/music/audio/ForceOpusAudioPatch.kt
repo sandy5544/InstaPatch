@@ -50,7 +50,7 @@ private object AudioFormatSelectionFingerprint : Fingerprint(
 val forceOpusAudioPatch = bytecodePatch(
     name = "Force Opus audio codec",
     description = "Prefers Opus audio within each existing audio group while preserving quality and language fallbacks.",
-    default = true
+    default = false
 ) {
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
 
