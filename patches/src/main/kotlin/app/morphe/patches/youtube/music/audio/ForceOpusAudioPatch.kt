@@ -1,7 +1,7 @@
 package app.morphe.patches.youtube.music.audio
 
 import app.morphe.patcher.Fingerprint
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.Constants.COMPATIBILITY_YOUTUBE_MUSIC
@@ -194,7 +194,7 @@ val forceOpusAudioPatch = bytecodePatch(
         val codecOrEnum = temp + 1
         val opusEnum = temp + 2
 
-        method.addInstructions(
+        method.addInstructionsWithLabels(
             branchIndex,
             """
                 iget-object v$currentWrapperOrCodec, v$currentGroupRegister, Lyon;->b:Lwgs;
