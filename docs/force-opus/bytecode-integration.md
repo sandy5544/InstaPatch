@@ -44,4 +44,4 @@ The patch must reserve local registers safely and preserve all existing control-
 - Video candidates and video quality remain unchanged.
 - Audio track selection and actual playback succeed on-device.
 
-Until the structural guards and runtime matrix pass, the Morphe patch must remain unregistered.
+Structural guards are implemented in `ForceOpusAudioPatch.kt`. The patch is registered in source but must not be released as stable until the Morphe build and runtime matrix pass.
