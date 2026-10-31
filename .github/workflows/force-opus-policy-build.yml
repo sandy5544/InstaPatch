@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   build:
@@ -27,4 +28,6 @@ jobs:
         uses: burrunan/gradle-cache-action@v3
 
       - name: Build patch module
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :patches:buildAndroid --no-daemon
