@@ -14,7 +14,7 @@ import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 private const val SELECTABLE_FORMATS =
-    "Lcom/google/android/apps/youtube/proto/streaming/SelectableFormatsOuterClass$SelectableFormats;"
+    "Lcom/google/android/apps/youtube/proto/streaming/SelectableFormatsOuterClass\$SelectableFormats;"
 
 private object AudioFormatSelectionFingerprint : Fingerprint(
     definingClass = "Lyop;",
@@ -27,7 +27,7 @@ private object AudioFormatSelectionFingerprint : Fingerprint(
         "Ljava/util/List;",
         "Ljava/util/List;",
         SELECTABLE_FORMATS,
-        "Lcom/google/android/apps/youtube/proto/streaming/MediaCapabilitiesOuterClass$MediaCapabilities;",
+        "Lcom/google/android/apps/youtube/proto/streaming/MediaCapabilitiesOuterClass\$MediaCapabilities;",
         "Z", "Z", "Z", "Z", "Z", "Z", "Z"
     ),
     returnType = "Lyop;"
