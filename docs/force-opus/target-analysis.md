@@ -44,18 +44,25 @@ At the comparison site in the inspected build:
 
 A deeper register-liveness pass found that `v15` is used later in the same method (at code-unit offset `0x02eb`). An earlier draft of the hook reused `v15`, which would have corrupted a later operation. That register is now deliberately excluded.
 
-The current hook uses only `v12-v14`. The original value in `v12` is consumed by `compareTo`; the first subsequent uses of `v13` and `v14` in the original instruction stream are writes at `0x05a1` and `0x05a2`, respectively. The source now checks the first-touch instruction for those registers and fails closed if either is read before being overwritten. It also asserts the target method's register count and key register assignments.
+The hook uses only `v12-v14`. The original value in `v12` is consumed by `compareTo`; the first subsequent uses of `v13` and `v14` in the original instruction stream are writes at `0x05a1` and `0x05a2`, respectively. The source checks the first-touch instruction for those registers and fails closed if either is read before being overwritten. It also asserts the target method's register count and key register assignments.
 
-## Injected decision
+## Injected decision and retained-codec state
 
-- Candidate Opus, retained non-Opus: set compare result to positive, allowing replacement.
-- Candidate non-Opus, retained Opus: set compare result to negative, preserving the retained candidate.
-- Both Opus or both non-Opus: leave the original compare result untouched.
+A further inspection of `Lyon.<init>` and `Lyon.compareTo` exposed an important distinction: `Lyon.b` stores the first wrapper for the group and is used for stable sorting. It is not updated when the quality winner changes. It must therefore not be used as the current codec.
 
-Codec identification reuses `Lwgs.z()`, `Lwgs.p(String)`, and `Lwgr.b` (the Opus enum constant). Direct DEX access-flag inspection confirms `z()` is an instance method, `p(String)` is static, and `Lwgr.b` is a static enum field. `Lyon.b` is a package-private instance field, and both `Lyop` and `Lyon` are in the default DEX package. The hook therefore reads it without changing field visibility. The patch does not modify `Lwgs.p()` itself.
+The patch adds a package-private `Lyon.patch_codec:Lwgr;` state field:
+
+1. The `Lyon(Lwgs)` constructor initializes it from the first candidate's codec.
+2. When an Opus candidate replaces a non-Opus candidate, the hook updates the state to Opus.
+3. A later non-Opus candidate is rejected while the retained codec state is Opus.
+4. When both candidates are Opus or both are non-Opus, the original quality comparison remains authoritative.
+
+This keeps `Lyon.b` unchanged, preserving the sort behavior in `Lyon.compareTo`.
+
+Codec identification reuses `Lwgs.z()`, `Lwgs.p(String)`, and `Lwgr.b` (the Opus enum constant). Direct DEX access-flag inspection confirms `z()` is an instance method, `p(String)` is static, and `Lwgr.b` is a static enum field. `Lyon.patch_codec` is package-private, and both `Lyop` and `Lyon` are in the default DEX package. The patch does not modify `Lwgs.p()` itself.
 
 ## Validation limits
 
-The selection block, register assignments, relevant access flags, and temporary-register liveness were checked against the original APK's raw DEX code item. The Morphe patch module compiles and the generated `.mpp` bundle includes the patch metadata.
+The selection block, register assignments, relevant access flags, and temporary-register liveness were checked against the original APK's raw DEX code item. The Morphe patch module compiled and the generated `.mpp` bundle included the patch metadata before the latest state-tracking changes. A fresh CI build is required for the current commit. The patch is opt-in by default while validation remains incomplete.
 
 Still outstanding: applying this patch bundle to the exact APK, verifying the resulting DEX with the Morphe patcher, and testing actual playback. Compilation and patch-list generation do not prove that the injected smali assembles or that playback selects Opus. The source guards intentionally abort if the inspected method shape differs.
