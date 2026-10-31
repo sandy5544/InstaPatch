@@ -1,0 +1,30 @@
+name: Force Opus policy build
+
+on:
+  push:
+    branches:
+      - feature/force-opus-youtube-music
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compile Morphe patch source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: burrunan/gradle-cache-action@v3
+
+      - name: Build patch module
+        run: ./gradlew :patches:buildAndroid --no-daemon
