@@ -26,9 +26,9 @@ A small policy test script is provided at:
 
 The Morphe bytecode patch is implemented in `patches/src/main/kotlin/app/morphe/patches/youtube/music/audio/ForceOpusAudioPatch.kt` and registered as `forceOpusAudioPatch`. It is pinned to YouTube Music `9.42.52` and adds fail-closed structural checks around the audio-only selection branch in `Lyop.n`.
 
-The injected comparison prefers Opus over non-Opus within the existing group. If both candidates use the same codec class, the original `Laipc` quality comparison remains unchanged. The global codec classifier and video-format path are untouched.
+The hook tracks the winning codec in a new `Lyon.patch_codec` field, initialized in the group constructor and updated only when an Opus candidate displaces a non-Opus candidate. It deliberately leaves `Lyon.b` unchanged because that field is used by the existing group sort order. When both candidates have the same Opus/non-Opus status, the original `Laipc` quality comparison remains unchanged. The global codec classifier and video-format path are untouched.
 
-Build validation and on-device playback validation are still pending. The CI workflow is being used to compile the Morphe patch module; a successful compile does not by itself prove that the patched APK plays correctly.
+The patch is opt-in by default. Source compilation and metadata generation have passed on an earlier commit; the latest retained-codec-state changes require a fresh build. Applying the patch to the target APK, DEX verification, and on-device playback validation remain pending.
 
 ## Reverse-engineering notes
 
