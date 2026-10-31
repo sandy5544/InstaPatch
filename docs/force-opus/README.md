@@ -24,6 +24,12 @@ A standalone policy-model test script is provided at:
 
 The runtime bytecode hook implements the same decisions directly in the target methods. The reference model is not called by the injected bytecode, and its script is not currently part of CI.
 
+## Experimental release
+
+[Download Force Opus alpha.2 for YouTube Music 9.42.52](https://github.com/sandy5544/InstaPatch/releases/tag/force-opus-ytmusic-9.42.52-alpha.2)
+
+The installable Morphe bundle is `patches-1.12.0-alpha.2.mpp`. Alpha.1 is superseded.
+
 ## Integration status
 
 The Morphe bytecode patch is implemented in `patches/src/main/kotlin/app/morphe/patches/youtube/music/audio/ForceOpusAudioPatch.kt` and registered as `forceOpusAudioPatch`. It is pinned to YouTube Music `9.42.52` and adds fail-closed structural checks around the audio-only selection branch in `Lyop.n`.
