@@ -6,6 +6,7 @@ on:
       - feature/force-opus-youtube-music
     paths:
       - .github/workflows/publish-force-opus-alpha.yml
+      - gradle.properties
   workflow_dispatch:
 
 permissions:
@@ -37,13 +38,13 @@ jobs:
       - name: Publish experimental release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: force-opus-ytmusic-9.42.52-alpha.1
-          name: Force Opus for YouTube Music 9.42.52 (Experimental)
+          tag_name: force-opus-ytmusic-9.42.52-alpha.2
+          name: Force Opus for YouTube Music 9.42.52 (Experimental alpha.2)
           prerelease: true
           fail_on_unmatched_files: true
           files: patches/build/libs/patches-*.mpp
           body: |
-            Experimental Morphe patch bundle for YouTube Music 9.42.52.
+            Experimental Morphe patch bundle for YouTube Music 9.42.52. This alpha.2 build supersedes alpha.1 and uses a release-versioned patch bundle.
 
             - Prefers Opus over non-Opus candidates within each existing audio group.
             - Tracks the actual winning codec separately, preserving Lyon.b group sorting.
