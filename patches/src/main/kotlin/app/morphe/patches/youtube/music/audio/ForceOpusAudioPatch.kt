@@ -142,16 +142,15 @@ val forceOpusAudioPatch = bytecodePatch(
             "Selected Lyon wrapper field is no longer an instance field."
         }
 
-        // The injected read originates in Lyop.n, not Lyon itself. Make the
-        // wrapper field accessible just as other Morphe patches do for bridges.
-        val mutableLyonClass = mutableClassDefBy("Lyon;")
-        val wrapperField = mutableLyonClass.fields.first {
-            it.name == "b" && it.type == "Lwgs;"
+        // Lyop and Lyon are both in the default DEX package. Lyon.b is
+        // package-private, so the injected access is legal without mutating
+        // the target app's field visibility.
+        check(
+            !AccessFlags.PRIVATE.isSet(lyonWrapperField.accessFlags) &&
+                !AccessFlags.PROTECTED.isSet(lyonWrapperField.accessFlags)
+        ) {
+            "Lyon.b is no longer package-accessible from Lyop."
         }
-        val restrictedFlags = AccessFlags.PRIVATE.value or AccessFlags.PROTECTED.value
-        wrapperField.setAccessFlags(
-            (wrapperField.accessFlags and restrictedFlags.inv()) or AccessFlags.PUBLIC.value
-        )
 
         val lwgsClass = classDefBy("Lwgs;")
         val codecStringAccessor = lwgsClass.methods.singleOrNull {
