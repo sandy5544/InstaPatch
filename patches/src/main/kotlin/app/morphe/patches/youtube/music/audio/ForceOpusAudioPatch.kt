@@ -20,7 +20,6 @@ private const val SELECTABLE_FORMATS =
 private object AudioFormatSelectionFingerprint : Fingerprint(
     definingClass = "Lyop;",
     name = "n",
-    isStatic = true,
     parameters = listOf(
         "Lyoc;",
         "Lwiu;",
@@ -31,7 +30,8 @@ private object AudioFormatSelectionFingerprint : Fingerprint(
         "Lcom/google/android/apps/youtube/proto/streaming/MediaCapabilitiesOuterClass\$MediaCapabilities;",
         "Z", "Z", "Z", "Z", "Z", "Z", "Z"
     ),
-    returnType = "Lyop;"
+    returnType = "Lyop;",
+    custom = { methodDef, _ -> AccessFlags.STATIC.isSet(methodDef.accessFlags) }
 )
 
 /**
