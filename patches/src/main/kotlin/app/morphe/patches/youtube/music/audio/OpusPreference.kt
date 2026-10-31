@@ -7,7 +7,7 @@ package app.morphe.patches.youtube.music.audio
  * replacement point in Lyop.n, after preserving the app's existing group key.
  * Video candidates must never be passed to this selector.
  */
-internal object OpusPreference {
+object OpusPreference {
     private const val OPUS_CODEC = "opus"
 
     data class Candidate<T>(
