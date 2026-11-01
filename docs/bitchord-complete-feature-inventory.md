@@ -78,6 +78,45 @@ These features are part of BitChord as an application, but are not equivalent to
 
 The above are foundations only. They do not become active in YouTube Music until hooked to the exact target APK's playback and audio pipeline.
 
+## BitChord README feature checklist
+
+The following list mirrors the complete feature groups advertised in BitChord's README. This is the canonical coverage checklist; implementation status is tracked separately above.
+
+### Playback
+- Search, browse and play content available on YouTube Music.
+- Hi-Res lossless audio: FLAC/ALAC from configured module sources, with YouTube Music fallback.
+- Gapless playback and adjustable true crossfade (0–12 seconds).
+- Automix beta with beat matching and tempo stretching.
+- Offline downloads with embedded metadata.
+- Local music library integration.
+- Background playback through a foreground media session.
+- Animated Apple-like lyrics.
+
+### Connectivity and accounts
+- Google account sign-in for personalized content.
+- Spotify account integration for playlists and Liked Songs.
+- Discord Rich Presence with login and live track, artist, album and progress.
+- Last.fm and ListenBrainz scrobbling.
+- Pluggable sources with add, edit, test and health-check workflows.
+
+### Experience
+- Animated album canvas / motion artwork on the now-playing screen.
+- Word- and syllable-synchronized lyrics.
+- Multiple lyrics providers: lrc.red, BiniLyrics, BetterLyrics, PaxSenix, LyricsPlus, SimpMusic, Unison, Megalobiz, KuGou, LRCLIB, Musixmatch and Genius.
+- Dynamic artwork-driven theming using a palette extracted from album art.
+- Frosted-glass translucent bars and Material 3 theming.
+
+### Controls and tweaks
+- Separate audio-quality ceilings for Wi-Fi and mobile data.
+- Playback speed from 0.5× to 2.0×.
+- Skip silence.
+- Sleep timer with fixed presets and stop-after-current-track.
+- System equalizer integration.
+- Bit-perfect USB exclusive output for lossless tracks at their native sample rate and bit depth.
+- Stats for nerds: codec, bit depth, sample rate and related playback information.
+
+Some items in the broader engineering matrix (for example key detection, vocal separation or phrase analysis) are possible research directions, not advertised BitChord features. They must not be mistaken for required README parity.
+
 ## Required integration inputs and release gates
 
 1. Exact YouTube Music APK used by the target device, with package/version/build fingerprint. The existing Force Opus patch is pinned to 9.42.52; the new hooks must be verified against the same exact APK, not assumed compatible from the version string alone.
