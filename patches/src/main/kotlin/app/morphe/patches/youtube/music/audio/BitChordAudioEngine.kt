@@ -212,10 +212,10 @@ object BitChordAudioEngine {
             for (i in samples.indices) {
                 val input = samples[i]
                 val magnitude = abs(input.toDouble())
-                val desired = if (magnitude > limit) limit / magnitude else 1.0
+                val desired = if (magnitude > limit.toDouble()) limit.toDouble() / magnitude else 1.0
                 val coefficient = if (desired < gain) attack else release
                 gain = desired + coefficient * (gain - desired)
-                samples[i] = (input * gain).coerceIn(-limit, limit)
+                samples[i] = (input.toDouble() * gain).coerceIn(-limit.toDouble(), limit.toDouble()).toFloat()
             }
         }
 
