@@ -54,7 +54,7 @@ Further DEX cross-reference analysis identified a concrete platform output path:
 
 ## Crossfade reuse
 
-Morphe's upstream Music patch set already contains a dual-player crossfade implementation that builds the second player through YouTube Music's own factory. This project should reuse that established player/session handoff rather than creating another independent player. Automix should be layered on top of the crossfade transition policy, if the host patch integration exposes a stable extension seam.
+The official `MorpheApp/morphe-patches` source contains `CrossfadePatch.kt` and `extensions/music/.../CrossfadePatch.java`. The public patch catalogue lists YouTube Music 9.42.52 as supported. The runtime keeps the outgoing ExoPlayer alive, creates the incoming player through YouTube Music's own factory, and explicitly maintains player-coordinator and MediaSession listener bindings while swapping players. This InstaPatch repository does not currently include that `extensions/music` module or the official Crossfade patch source, so the current custom build must not be represented as including crossfade merely because Morphe upstream offers it. Use the official Morphe Crossfade patch separately. Do not create a third player. Automix can only be added after the transition policy is connected to a stable crossfade-controller seam.
 
 ## Not yet proven
 
