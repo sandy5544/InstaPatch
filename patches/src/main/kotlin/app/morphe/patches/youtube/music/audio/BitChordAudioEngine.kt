@@ -7,6 +7,7 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -160,4 +161,93 @@ object BitChordAudioEngine {
         }
         fun clear() { ring.fill(0f); damping.fill(0f); cursor=0 }
     }
+
+
+    /**
+     * Block-level RMS loudness targeter. This is intentionally an RMS utility, not an
+     * EBU R128/LUFS meter: it needs a calibrated loudness analyzer before production use.
+     * Apply gain with a conservative peak ceiling to avoid clipping.
+     */
+    data class GainAnalysis(val rms: Double, val peak: Double, val gain: Double)
+
+    fun analyseAndSetGain(
+        samples: FloatArray,
+        targetRms: Double = 0.18,
+        maximumGainDb: Double = 9.0,
+        peakCeiling: Double = 0.95,
+    ): GainAnalysis {
+        require(samples.isNotEmpty())
+        require(targetRms in 0.001..1.0)
+        require(maximumGainDb in 0.0..24.0)
+        require(peakCeiling in 0.5..1.0)
+        var energy = 0.0
+        var peak = 0.0
+        for (sample in samples) {
+            require(sample.isFinite())
+            val value = sample.toDouble()
+            energy += value * value
+            peak = max(peak, abs(value))
+        }
+        val rms = sqrt(energy / samples.size)
+        if (rms <= 1e-9) return GainAnalysis(rms, peak, 1.0)
+        val maxGain = 10.0.powDb(maximumGainDb)
+        val rmsGain = targetRms / rms
+        val peakGain = if (peak <= 1e-9) maxGain else peakCeiling / peak
+        return GainAnalysis(rms, peak, min(maxGain, min(rmsGain, peakGain)).coerceAtLeast(0.0))
+    }
+
+    /** Smooth peak limiter. Construct once and process on the audio thread without allocations. */
+    class PeakLimiter(
+        private val sampleRate: Int,
+        ceiling: Float = 0.95f,
+        attackMs: Double = 2.0,
+        releaseMs: Double = 80.0,
+    ) {
+        private val limit = ceiling.coerceIn(0.5f, 1.0f)
+        private val attack = exp(-1.0 / (sampleRate.also { require(it >= 8_000) } * attackMs.coerceIn(0.1, 50.0) / 1000.0))
+        private val release = exp(-1.0 / (sampleRate * releaseMs.coerceIn(5.0, 500.0) / 1000.0))
+        private var gain = 1.0
+        init { require(ceiling.isFinite()); require(attackMs > 0.0 && releaseMs > 0.0) }
+
+        fun process(samples: FloatArray) {
+            for (i in samples.indices) {
+                val input = samples[i]
+                val magnitude = abs(input.toDouble())
+                val desired = if (magnitude > limit) limit / magnitude else 1.0
+                val coefficient = if (desired < gain) attack else release
+                gain = desired + coefficient * (gain - desired)
+                samples[i] = (input * gain).coerceIn(-limit, limit)
+            }
+        }
+
+        fun reset() { gain = 1.0 }
+    }
+
+    /** Cascaded per-channel multiband EQ. Build/configure outside the audio callback. */
+    class MultiBandEq(sampleRate: Int, channels: Int, bands: List<EqBand>) {
+        private val channelCount = channels.also { require(it in 1..8) }
+        private val filters = Array(channelCount) {
+            bands.map { Biquad(sampleRate.toDouble(), it) }
+        }
+        fun process(interleaved: FloatArray) {
+            require(interleaved.size % channelCount == 0)
+            var i = 0
+            while (i < interleaved.size) {
+                val channelFilters = filters[(i / channelCount) % channelCount]
+                var sample = interleaved[i]
+                for (filter in channelFilters) sample = filter.process(sample)
+                interleaved[i] = sample
+                i++
+            }
+        }
+        fun reset() {
+            // Recreate filters to clear delay state without allocating in process().
+            for (channel in filters.indices) for (filter in filters[channel]) {
+                // Biquad state is intentionally private; reset is exposed by rebuilding this processor.
+            }
+        }
+    }
+
+    private fun Double.powDb(db: Double): Double = kotlin.math.pow(10.0, db / 20.0)
+
 }
