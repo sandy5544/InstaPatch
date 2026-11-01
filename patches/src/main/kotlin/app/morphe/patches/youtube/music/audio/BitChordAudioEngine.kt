@@ -239,12 +239,6 @@ object BitChordAudioEngine {
                 i++
             }
         }
-        fun reset() {
-            // Recreate filters to clear delay state without allocating in process().
-            for (channel in filters.indices) for (filter in filters[channel]) {
-                // Biquad state is intentionally private; reset is exposed by rebuilding this processor.
-            }
-        }
     }
 
 
