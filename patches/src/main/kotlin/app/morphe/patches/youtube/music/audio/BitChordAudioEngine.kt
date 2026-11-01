@@ -7,7 +7,6 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -190,7 +189,7 @@ object BitChordAudioEngine {
         }
         val rms = sqrt(energy / samples.size)
         if (rms <= 1e-9) return GainAnalysis(rms, peak, 1.0)
-        val maxGain = 10.0.powDb(maximumGainDb)
+        val maxGain = exp(ln(10.0) * maximumGainDb / 20.0)
         val rmsGain = targetRms / rms
         val peakGain = if (peak <= 1e-9) maxGain else peakCeiling / peak
         return GainAnalysis(rms, peak, min(maxGain, min(rmsGain, peakGain)).coerceAtLeast(0.0))
@@ -248,6 +247,5 @@ object BitChordAudioEngine {
         }
     }
 
-    private fun Double.powDb(db: Double): Double = kotlin.math.pow(10.0, db / 20.0)
 
 }
