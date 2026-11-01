@@ -7,6 +7,7 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.round
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -46,6 +47,7 @@ object BitChordAudioEngine {
         var bestLag = -1
         var bestScore = Double.NEGATIVE_INFINITY
         var secondScore = Double.NEGATIVE_INFINITY
+        val lagScores = DoubleArray(maxLag + 1)
         for (lag in minLag..maxLag) {
             var dot = 0.0; var left = 0.0; var right = 0.0
             for (i in lag until centered.size) {
@@ -53,10 +55,28 @@ object BitChordAudioEngine {
                 dot += a * b; left += a * a; right += b * b
             }
             val score = if (left > 0.0 && right > 0.0) dot / sqrt(left * right) else 0.0
+            lagScores[lag] = score
             if (score > bestScore) { secondScore = bestScore; bestScore = score; bestLag = lag }
             else if (score > secondScore) secondScore = score
         }
         if (bestLag < 0 || bestScore < 0.08) return null
+
+        // Sparse or strongly accented material can correlate equally well at a multiple
+        // of the true beat period. Prefer a credible shorter divisor to avoid reporting
+        // half-time BPM (for example 45 instead of 90) or a three-beat subharmonic.
+        val dominantLag = bestLag
+        for (lag in minLag until dominantLag) {
+            val multiple = dominantLag.toDouble() / lag
+            val nearestMultiple = round(multiple)
+            if (nearestMultiple in 2.0..6.0 &&
+                abs(multiple - nearestMultiple) <= 0.08 &&
+                lagScores[lag] >= bestScore * 0.65
+            ) {
+                bestLag = lag
+                break
+            }
+        }
+        val selectedScore = lagScores[bestLag]
         val period = bestLag * hop.toDouble() / sampleRate
         val bpm = 60.0 / period
         var bestPhase = 0
@@ -67,7 +87,7 @@ object BitChordAudioEngine {
             val score = if (count == 0) 0.0 else sum / count
             if (score > phaseEnergy) { phaseEnergy = score; bestPhase = phase }
         }
-        val confidence = ((bestScore - max(0.0, secondScore)) / max(0.01, 1.0 - max(0.0, secondScore))).coerceIn(0.0, 1.0)
+        val confidence = ((selectedScore - max(0.0, secondScore)) / max(0.01, 1.0 - max(0.0, secondScore))).coerceIn(0.0, 1.0)
         return BeatGrid(bpm, period, bestPhase * hop.toDouble() / sampleRate, confidence)
     }
 
