@@ -43,14 +43,14 @@ Further DEX cross-reference analysis identified a concrete platform output path:
 
 | Symbol | Evidence from DEX references |
 |---|---|
-| `Lchd;` | Audio-sink-like class; owns lifecycle and invokes `AudioTrack.write(ByteBuffer, int, int)` |
+| `Lchd;` | Concrete implementation of interface `Lcgf`; that interface declares `E(ByteBuffer, long, int): boolean`, matching Media3's audio-sink `handleBuffer` contract |
 | `Lchd.ab()` | Performs the `AudioTrack.write(ByteBuffer, int, int)` operation using a buffered PCM ByteBuffer |
-| `Lchd.E(ByteBuffer, long, int)` | Receives a ByteBuffer and coordinates sink readiness, track state and buffer submission |
+| `Lchd.E(ByteBuffer, long, int)` | Concrete `Lcgf.E` implementation; strongest candidate for the decoded-PCM `handleBuffer` insertion point |
 | `Lchd.S(ByteBuffer)` | Handles ByteBuffer data in the sink path before/around writes; exact transformation semantics still need instruction-level verification |
 | `Lcgq.h(Lcft;)` | Constructs an `AudioTrack` via `AudioTrack.Builder`, configuring attributes, format, transfer mode, buffer size and session ID |
 | `Lcgo` | Wraps an `AudioTrack`, exposing sample rate, buffer size, timestamp and device-routing operations |
 
-`Lchd` is the strongest candidate for a PCM-side insertion point. The next step is to verify byte order, PCM encoding, channel count, buffer position/limit ownership, and whether offload/direct-playback paths bypass it. A DSP hook must process only decoded PCM, preserve buffer position/limit and avoid allocation/blocking on the audio thread. It must also be disabled for passthrough/offload modes where the data is not ordinary PCM.
+`Lchd.E(ByteBuffer, long, int): boolean` is the strongest candidate for a PCM-side insertion point: its class implements `Lcgf`, whose interface exposes the same method signature. This is a structural match to Media3's AudioSink buffer callback, not just a method-name guess. The next step is to verify byte order, PCM encoding, channel count, buffer position/limit ownership, and whether offload/direct-playback paths bypass it. A DSP hook must process only decoded PCM, preserve buffer position/limit and avoid allocation/blocking on the audio thread. It must also be disabled for passthrough/offload modes where the data is not ordinary PCM.
 
 ## Crossfade reuse
 
