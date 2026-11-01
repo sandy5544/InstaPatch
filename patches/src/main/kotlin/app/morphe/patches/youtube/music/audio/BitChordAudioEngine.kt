@@ -39,8 +39,10 @@ object BitChordAudioEngine {
         if (envelope.size < 300) return null
         val mean = envelope.average()
         val centered = DoubleArray(envelope.size) { envelope[it] - mean }
-        val minLag = 34
-        val maxLag = min(100, centered.size / 3)
+        // At a 10 ms envelope hop this covers approximately 40–240 BPM.
+        // The previous 34–100 lag window silently excluded slow and fast material.
+        val minLag = 25
+        val maxLag = min(150, centered.size / 3)
         var bestLag = -1
         var bestScore = Double.NEGATIVE_INFINITY
         var secondScore = Double.NEGATIVE_INFINITY
@@ -114,14 +116,14 @@ object BitChordAudioEngine {
 
     /** Interleaved multichannel echo-out. Construct outside the real-time audio callback. */
     class EchoOut(sampleRate: Int, channels: Int, delayMs: Int, feedback: Float = 0.35f, wet: Float = 0.45f) {
-        private val channelCount=channels
-        private val delayFrames=(sampleRate*delayMs.coerceIn(40,1500)/1000).coerceAtLeast(1)
-        private val ring=FloatArray(delayFrames*channels)
+        private val channelCount = channels.also { require(it in 1..8) }
+        private val delayFrames = (sampleRate.also { require(it >= 8_000) } * delayMs.coerceIn(40, 1500) / 1000).coerceAtLeast(1)
+        private val ring = FloatArray(delayFrames * channelCount)
         private var cursor=0
         private val fb=feedback.coerceIn(0f,0.75f)
         private val mix=wet.coerceIn(0f,1f)
         private val damping=FloatArray(channels)
-        init { require(sampleRate>=8000 && channels in 1..8) }
+        init { /* Constructor arguments are validated before allocating the delay ring. */ }
         fun process(interleaved: FloatArray, frames: Int = interleaved.size/channelCount) {
             require(frames*channelCount<=interleaved.size)
             for (frame in 0 until frames) {
