@@ -1,4 +1,4 @@
-name: Publish BitChord experimental build
+name: Publish BitChord patch bundle
 
 on:
   push:
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build-and-publish:
-    name: Build and publish BitChord alpha
+    name: Build and publish BitChord patch bundle
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,13 +38,13 @@ jobs:
       - name: Publish experimental release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: bitchord-v0.1.0-alpha.1
-          name: BitChord audio engine port for YouTube Music 9.42.52 (Alpha 1)
-          prerelease: true
+          tag_name: v1.12.0
+          name: InstaPatch 1.12.0
+          prerelease: false
           fail_on_unmatched_files: true
           files: patches/build/libs/patches-*.mpp
           body: |
-            Experimental InstaPatch Morphe bundle containing the BitChord-inspired DSP and playback-policy foundation for YouTube Music 9.42.52.
+            InstaPatch Morphe patch bundle 1.12.0. Includes the BitChord-inspired DSP and playback-policy foundation for YouTube Music 9.42.52.
 
             Included:
             - Force Opus preference patch.
@@ -53,4 +53,4 @@ jobs:
             - Network quality, silence-gate, sleep-timer, stream-statistics and authorised source-selection policies.
             - Automated build and smoke-test coverage.
 
-            IMPORTANT: This is an experimental developer alpha. The DSP and playback policies are not yet wired into YouTube Music's live playback pipeline. No claim is made that crossfade, automix, EQ, sleep timer, silence skipping or external-source playback is active in the app. Applying the bundle to the target APK, DEX verification and real-device playback validation remain outstanding. Use only for testing; not a stable release.
+            IMPORTANT: This release contains an incomplete BitChord port. The DSP and playback policies are not yet wired into YouTube Music's live playback pipeline. No claim is made that crossfade, automix, EQ, sleep timer, silence skipping or external-source playback is active in the app. Applying the bundle to the target APK, DEX verification and real-device playback validation remain outstanding. Use only for testing; not a stable release.
