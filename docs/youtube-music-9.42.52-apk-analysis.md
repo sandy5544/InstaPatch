@@ -37,6 +37,25 @@ These are version-specific obfuscated symbols. Do not reuse them for another You
 3. The player-facing classes are heavily obfuscated and spread across multiple DEX files. A safe patch needs structural fingerprints and register/control-flow checks, not just class-name matching.
 4. The APK includes Media3 effect JNI support, but its presence alone does not prove that a public or safe PCM processor insertion point is available to a Morphe patch.
 
+## Audio output path discovered
+
+Further DEX cross-reference analysis identified a concrete platform output path:
+
+| Symbol | Evidence from DEX references |
+|---|---|
+| `Lchd;` | Audio-sink-like class; owns lifecycle and invokes `AudioTrack.write(ByteBuffer, int, int)` |
+| `Lchd.ab()` | Performs the `AudioTrack.write(ByteBuffer, int, int)` operation using a buffered PCM ByteBuffer |
+| `Lchd.E(ByteBuffer, long, int)` | Receives a ByteBuffer and coordinates sink readiness, track state and buffer submission |
+| `Lchd.S(ByteBuffer)` | Handles ByteBuffer data in the sink path before/around writes; exact transformation semantics still need instruction-level verification |
+| `Lcgq.h(Lcft;)` | Constructs an `AudioTrack` via `AudioTrack.Builder`, configuring attributes, format, transfer mode, buffer size and session ID |
+| `Lcgo` | Wraps an `AudioTrack`, exposing sample rate, buffer size, timestamp and device-routing operations |
+
+`Lchd` is the strongest candidate for a PCM-side insertion point. The next step is to verify byte order, PCM encoding, channel count, buffer position/limit ownership, and whether offload/direct-playback paths bypass it. A DSP hook must process only decoded PCM, preserve buffer position/limit and avoid allocation/blocking on the audio thread. It must also be disabled for passthrough/offload modes where the data is not ordinary PCM.
+
+## Crossfade reuse
+
+Morphe's upstream Music patch set already contains a dual-player crossfade implementation that builds the second player through YouTube Music's own factory. This project should reuse that established player/session handoff rather than creating another independent player. Automix should be layered on top of the crossfade transition policy, if the host patch integration exposes a stable extension seam.
+
 ## Not yet proven
 
 - No decoded PCM callback or stable AudioProcessor insertion point has yet been demonstrated in the target player factory.
