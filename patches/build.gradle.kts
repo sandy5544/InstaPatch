@@ -31,6 +31,12 @@ tasks {
         classpath = sourceSets["main"].runtimeClasspath
         mainClass.set("app.morphe.patches.youtube.music.audio.BitChordAudioEngineSelfTest")
     }
+    register<JavaExec>("testBitChordFeaturePolicies") {
+        description = "Run framework-free BitChord playback policy smoke tests"
+        dependsOn(build)
+        classpath = sourceSets["main"].runtimeClasspath
+        mainClass.set("app.morphe.patches.youtube.music.audio.BitChordFeaturePolicySelfTest")
+    }
     publish { dependsOn("generatePatchesList") }
 }
 
