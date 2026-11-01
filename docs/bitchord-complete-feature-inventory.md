@@ -10,7 +10,7 @@
 | BitChord capability | Morphe-port assessment | Work required |
 |---|---|---|
 | Gapless playback | Potentially patchable | Verify YTM queue/renderer transition and preserve existing playback semantics |
-| True crossfade (0–12 s) | Partially available in Morphe ecosystem | Inspect and extend the existing dual-player implementation; exact YTM player-factory hook required |
+| True crossfade (0–12 s) | Available in official Morphe upstream for supported YTM 9.x builds, including 9.42.52; not vendored in this custom InstaPatch source tree | Use the official Crossfade patch in Morphe rather than duplicating its dual-player/session lifecycle. This branch should add Automix policy only if it can integrate through a stable extension seam |
 | Equal-power crossfade curves | DSP foundation exists | Connect to both player volume paths and validate clipping/headroom |
 | DJ-style Automix | Not integrated | Queue look-ahead, analysis cache, transition state machine, fallback policy |
 | BPM/beat-grid analysis | Prototype only | Decode representative audio off-thread; validate BPM confidence and phase |
@@ -69,14 +69,18 @@ These features are part of BitChord as an application, but are not equivalent to
 | Android TV interface | Separate product/UI; out of scope for a phone patch |
 | Search, browse, library and playlist redesign | App-wide UI/data architecture; out of scope |
 
+## Existing crossfade implementation discovered
+
+The official `MorpheApp/morphe-patches` repository already contains `CrossfadePatch.kt` and the runtime extension `CrossfadePatch.java`. Its implementation creates the incoming player through YouTube Music's own player factory, preserves the MediaSession/player-coordinator bindings, and swaps the player references while the outgoing player fades. The official patch catalogue lists YouTube Music 9.42.52 as a supported version. This InstaPatch repository does not currently vendor that patch or its `extensions/music` runtime module, so do not assume that building this repository alone installs crossfade. For now, use the official Morphe Crossfade patch separately. The source and runtime are substantial, version-sensitive code, not a small helper that can safely be copied into this branch.
+
 ## Existing work in this branch
 
-- BitChordAudioEngine.kt: independent onset-envelope BPM estimator, conservative beat transition planner, biquad EQ primitive and multichannel echo-out primitive.
+- BitChordAudioEngine.kt: independent onset-envelope BPM estimator (now targeting approximately 40–240 BPM), conservative beat transition planner, biquad EQ primitive and multichannel echo-out primitive. The estimator is still a prototype and needs a larger labelled music corpus for accuracy validation.
 - BitChordAudioEngineSelfTest.kt: framework-free DSP smoke tests.
 - CI workflow: Morphe patch bundle build, DSP smoke tests and patch metadata generation.
 - Existing Force Opus patch remains separate and opt-in.
 
-The above are foundations only. They do not become active in YouTube Music until hooked to the exact target APK's playback and audio pipeline.
+The above are foundations only. They do not become active in YouTube Music until hooked to the exact target APK's playback and audio pipeline. The audio sink callback candidate identified in the APK (`Lchd.E(ByteBuffer, long, int)`) still needs a safe format-aware hook. The patch module also needs a dedicated runtime extension module before a bytecode callback can invoke a packaged implementation.
 
 ## BitChord README feature checklist
 
