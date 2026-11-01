@@ -32,6 +32,19 @@ object BitChordAudioEngineSelfTest {
                 "Expected $bpm BPM (±6%), got $grid"
             }
         }
+
+        val gain = BitChordAudioEngine.analyseAndSetGain(FloatArray(1024) { 0.05f })
+        check(gain.gain in 1.0..3.0 && gain.peak < 1.0)
+        val limiter = BitChordAudioEngine.PeakLimiter(48_000)
+        val hot = FloatArray(256) { 1.4f }
+        limiter.process(hot)
+        check(hot.all { it.isFinite() && kotlin.math.abs(it) <= 0.95f })
+        val multiband = BitChordAudioEngine.MultiBandEq(48_000, 2, listOf(
+            BitChordAudioEngine.EqBand(BitChordAudioEngine.FilterType.PEAKING, 1_000.0, gainDb = 3.0)
+        ))
+        val stereo = FloatArray(512) { 0.1f }
+        multiband.process(stereo)
+        check(stereo.all { it.isFinite() })
         check(runCatching { BitChordAudioEngine.EchoOut(48_000, 0, 250) }.isFailure)
         println("BitChord audio engine smoke tests passed.")
     }
