@@ -136,4 +136,4 @@ Some items in the broader engineering matrix (for example key detection, vocal s
 
 ## Current status
 
-The first CI run for this branch completed the Morphe patch-bundle build, DSP smoke-test step, metadata generation and artifact upload successfully. This proves the branch builds and its standalone DSP checks run. It does not prove any new DSP feature is wired into the YouTube Music runtime or that an APK has been patched and tested.
+The original DSP-only CI run completed successfully. A newer CI run now includes the added playback-policy test task; it is still running at the time of this update. Passing CI will validate compilation and deterministic policy tests only. It does not prove any new policy or DSP feature is wired into the YouTube Music runtime or that an APK has been patched and tested.
