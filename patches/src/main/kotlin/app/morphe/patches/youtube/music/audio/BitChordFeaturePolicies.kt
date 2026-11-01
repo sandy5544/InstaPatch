@@ -44,7 +44,7 @@ object BitChordFeaturePolicies {
     ): AudioCandidate<T>? {
         val eligible = candidates.filter {
             it.isAuthorised && it.quality.rank <= ceilings.forNetwork(network).rank &&
-                it.bitrateKbps > 0
+                it.bitrateKbps >= 0
         }
         return eligible.maxWithOrNull(
             compareBy<AudioCandidate<T>> { it.quality.rank }
