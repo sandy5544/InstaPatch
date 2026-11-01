@@ -13,9 +13,7 @@ patches {
 }
 
 dependencies {
-    // Used by JsonGenerator.
     implementation(libs.gson)
-
     implementation(libs.morphe.patches.library)
     implementation(libs.instagram.morphe.patches.library)
 }
@@ -23,20 +21,25 @@ dependencies {
 tasks {
     register<JavaExec>("generatePatchesList") {
         description = "Build patch with patch list"
-
         dependsOn(build)
-
         classpath = sourceSets["main"].runtimeClasspath
         mainClass.set("app.morphe.util.PatchListGeneratorKt")
     }
-    // Used by gradle-semantic-release-plugin.
-    publish {
-        dependsOn("generatePatchesList")
+    register<JavaExec>("testBitChordAudioEngine") {
+        description = "Run framework-free BitChord audio engine smoke tests"
+        dependsOn(build)
+        classpath = sourceSets["main"].runtimeClasspath
+        mainClass.set("app.morphe.patches.youtube.music.audio.BitChordAudioEngineSelfTest")
     }
+    register<JavaExec>("testBitChordFeaturePolicies") {
+        description = "Run framework-free BitChord playback policy smoke tests"
+        dependsOn(build)
+        classpath = sourceSets["main"].runtimeClasspath
+        mainClass.set("app.morphe.patches.youtube.music.audio.BitChordFeaturePolicySelfTest")
+    }
+    publish { dependsOn("generatePatchesList") }
 }
 
 kotlin {
-    compilerOptions {
-        freeCompilerArgs = listOf("-Xcontext-parameters")
-    }
+    compilerOptions { freeCompilerArgs = listOf("-Xcontext-parameters") }
 }
