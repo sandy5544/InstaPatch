@@ -28,6 +28,8 @@ object BitChordFeaturePolicySelfTest {
         check(BitChordFeaturePolicies.SleepTimer.remainingMs(timer, 30_000) == 40_000L)
         check(!BitChordFeaturePolicies.SleepTimer.shouldStop(timer, 69_999, trackEnded = false))
         check(BitChordFeaturePolicies.SleepTimer.shouldStop(timer, 70_000, trackEnded = false))
+        val overflowTimer = BitChordFeaturePolicies.SleepTimer.after(Long.MAX_VALUE - 5, 100)
+        check(overflowTimer.deadlineElapsedMs == Long.MAX_VALUE)
         val endTimer = BitChordFeaturePolicies.SleepTimer.atEndOfTrack()
         check(!BitChordFeaturePolicies.SleepTimer.shouldStop(endTimer, 1, trackEnded = false))
         check(BitChordFeaturePolicies.SleepTimer.shouldStop(endTimer, 1, trackEnded = true))
