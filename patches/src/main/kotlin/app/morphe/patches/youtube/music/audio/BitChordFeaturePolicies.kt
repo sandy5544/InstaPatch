@@ -128,7 +128,8 @@ object BitChordFeaturePolicies {
             require(nowElapsedMs >= 0L)
             require(durationMs > 0L)
             require(fadeOutMs in 0L..durationMs)
-            return SleepState(SleepMode.DEADLINE, nowElapsedMs + durationMs, fadeOutMs)
+            val deadline = if (Long.MAX_VALUE - nowElapsedMs < durationMs) Long.MAX_VALUE else nowElapsedMs + durationMs
+            return SleepState(SleepMode.DEADLINE, deadline, fadeOutMs)
         }
 
         fun atEndOfTrack(fadeOutMs: Long = 0L): SleepState {
