@@ -28,7 +28,7 @@ object BitChordAudioEngineSelfTest {
             }
             val grid = BitChordAudioEngine.estimateBeatGrid(samples, rate)
             val tolerance = bpm * 0.06
-            check(grid != null && kotlin.math.abs(grid.bpm - bpm) <= tolerance) {
+            check(grid != null && kotlin.math.abs(grid.bpm - bpm) <= tolerance && grid.confidence > 0.2) {
                 "Expected $bpm BPM (±6%), got $grid"
             }
         }
