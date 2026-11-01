@@ -35,6 +35,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :patches:testBitChordAudioEngine --no-daemon
+      - name: Run playback feature policy tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :patches:testBitChordFeaturePolicies --no-daemon
       - name: Generate patch metadata
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
