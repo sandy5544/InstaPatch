@@ -13,13 +13,26 @@ object BitChordAudioEngineSelfTest {
         val echo=BitChordAudioEngine.EchoOut(48_000,2,250)
         val pcm=FloatArray(48_000*2); pcm[0]=0.5f; echo.process(pcm)
         check(pcm.all { it.isFinite() } && pcm.maxOf { kotlin.math.abs(it) }<=1.0f); echo.clear()
-        val rate=8_000; val samples=FloatArray(rate*12); val beat=rate/2
-        for (n in 0 until 24) for (i in 0 until 80) {
-            val index=n*beat+i
-            if(index<samples.size) samples[index]=(0.8*kotlin.math.exp(-i/18.0)).toFloat()
+        val rate = 8_000
+        for (bpm in listOf(40, 60, 90, 120, 180, 240)) {
+            val samples = FloatArray(rate * 12)
+            val beatFrames = (rate * 60.0 / bpm).toInt()
+            val pulseFrames = 80
+            for (n in 0 until 24 * 240 / bpm.coerceAtLeast(40)) {
+                for (i in 0 until pulseFrames) {
+                    val index = n * beatFrames + i
+                    if (index < samples.size) {
+                        samples[index] = (0.8 * kotlin.math.exp(-i / 18.0)).toFloat()
+                    }
+                }
+            }
+            val grid = BitChordAudioEngine.estimateBeatGrid(samples, rate)
+            val tolerance = bpm * 0.06
+            check(grid != null && kotlin.math.abs(grid.bpm - bpm) <= tolerance) {
+                "Expected $bpm BPM (±6%), got $grid"
+            }
         }
-        val grid=BitChordAudioEngine.estimateBeatGrid(samples,rate)
-        check(grid!=null && grid.bpm in 110.0..130.0) { "Expected ~120 BPM, got $grid" }
+        check(runCatching { BitChordAudioEngine.EchoOut(48_000, 0, 250) }.isFailure)
         println("BitChord audio engine smoke tests passed.")
     }
 }
