@@ -46,7 +46,6 @@ object BitChordAudioEngine {
         val maxLag = min(150, centered.size / 3)
         var bestLag = -1
         var bestScore = Double.NEGATIVE_INFINITY
-        var secondScore = Double.NEGATIVE_INFINITY
         val lagScores = DoubleArray(maxLag + 1)
         for (lag in minLag..maxLag) {
             var dot = 0.0; var left = 0.0; var right = 0.0
@@ -56,8 +55,7 @@ object BitChordAudioEngine {
             }
             val score = if (left > 0.0 && right > 0.0) dot / sqrt(left * right) else 0.0
             lagScores[lag] = score
-            if (score > bestScore) { secondScore = bestScore; bestScore = score; bestLag = lag }
-            else if (score > secondScore) secondScore = score
+            if (score > bestScore) { bestScore = score; bestLag = lag }
         }
         if (bestLag < 0 || bestScore < 0.08) return null
 
@@ -87,7 +85,10 @@ object BitChordAudioEngine {
             val score = if (count == 0) 0.0 else sum / count
             if (score > phaseEnergy) { phaseEnergy = score; bestPhase = phase }
         }
-        val confidence = ((selectedScore - max(0.0, secondScore)) / max(0.01, 1.0 - max(0.0, secondScore))).coerceIn(0.0, 1.0)
+        // Confidence reflects periodicity strength, not uniqueness of a tempo octave.
+        // Half/double-time ambiguity is common in music and is handled by conservative
+        // transition limits rather than incorrectly collapsing confidence to zero.
+        val confidence = selectedScore.coerceIn(0.0, 1.0)
         return BeatGrid(bpm, period, bestPhase * hop.toDouble() / sampleRate, confidence)
     }
 
