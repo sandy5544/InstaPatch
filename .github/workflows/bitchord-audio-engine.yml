@@ -8,6 +8,9 @@ on:
       - 'patches/**'
       - 'tools/**'
       - '.github/workflows/bitchord-audio-engine.yml'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
