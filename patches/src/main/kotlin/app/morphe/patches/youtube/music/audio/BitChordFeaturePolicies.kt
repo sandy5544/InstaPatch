@@ -143,10 +143,11 @@ object BitChordFeaturePolicies {
                 SleepMode.END_OF_TRACK -> trackEnded
             }
 
-        fun remainingMs(state: SleepState, nowElapsedMs: Long): Long? =
-            if (state.mode == SleepMode.DEADLINE)
-                (state.deadlineElapsedMs ?: return null).minus(nowElapsedMs).coerceAtLeast(0L)
-            else null
+        fun remainingMs(state: SleepState, nowElapsedMs: Long): Long? {
+            if (state.mode != SleepMode.DEADLINE) return null
+            val deadline = state.deadlineElapsedMs ?: return null
+            return (deadline - nowElapsedMs).coerceAtLeast(0L)
+        }
     }
 
     data class StreamStats(
