@@ -18,7 +18,7 @@ object BitChordAudioEngineSelfTest {
             val samples = FloatArray(rate * 12)
             val beatFrames = (rate * 60.0 / bpm).toInt()
             val pulseFrames = 80
-            for (n in 0 until 24 * 240 / bpm.coerceAtLeast(40)) {
+            for (n in 0 until (12 * bpm / 60)) {
                 for (i in 0 until pulseFrames) {
                     val index = n * beatFrames + i
                     if (index < samples.size) {
