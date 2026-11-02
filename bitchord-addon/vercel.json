@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/manifest.json",
+      "dest": "/api/manifest"
+    },
+    {
+      "src": "/search",
+      "dest": "/api/search"
+    },
+    {
+      "src": "/stream/(.*)",
+      "dest": "/api/stream?id=$1"
+    }
+  ]
+}
