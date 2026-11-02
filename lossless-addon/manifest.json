@@ -1,0 +1,19 @@
+{
+  "id": "com.sandy5544.lossless.independent",
+  "name": "Independent Lossless",
+  "version": "1.0.0",
+  "checkValidLossless": 0,
+  "allowDownloads": 0,
+  "category:music": [
+    {
+      "id": "independent-qobuz",
+      "name": "Qobuz FLAC / Hi-Res",
+      "author": "sandy5544",
+      "version": "1.0.0",
+      "code": 4,
+      "type": "MODULE",
+      "download": "modules/qobuz.js",
+      "trusted": false
+    }
+  ]
+}
