@@ -35,13 +35,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APK_PATH: standalone-player/app/build/outputs/apk/debug/app-debug.apk
-          TAG: auralis-v0.1.0
+          TAG: auralis-v0.2.0
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK_PATH" --clobber
           else
             gh release create "$TAG" "$APK_PATH#Auralis Player APK" \
               --target "$GITHUB_SHA" \
-              --title "Auralis Player v0.1.0" \
-              --notes "Early development build of Auralis Player. This is not yet the completed BitChord + LastWave hybrid. See the standalone-player folder in the source branch for implemented features and current limitations."
+              --title "Auralis Player v0.2.0" \
+              --notes "Auralis Player v0.2.0 adds an in-app HTTPS provider connection, manifest validation, track search and direct stream playback. This remains an early development build; see the source README for supported provider contract and limitations."
           fi
