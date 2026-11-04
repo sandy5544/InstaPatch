@@ -1,0 +1,73 @@
+name: Auralis Unified Android
+
+on:
+  push:
+    branches: [auralis-unified]
+    paths:
+      - "auralis-unified/**"
+      - ".gitmodules"
+      - ".github/workflows/auralis-unified.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auralis-unified-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Android ARM64 APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project and pinned Android source
+        uses: actions/checkout@v4
+        with:
+          ref: auralis-unified
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Auralis Unified
+        working-directory: auralis-unified/lastwave
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon :app:assembleGmsMobileArm64Debug
+
+      - name: Collect APK
+        id: apk
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          find auralis-unified/lastwave/app/build/outputs/apk -type f -name "*.apk" -print -exec cp {} dist/auralis-unified-arm64-debug.apk \;
+          test -s dist/auralis-unified-arm64-debug.apk
+          sha256sum dist/auralis-unified-arm64-debug.apk | tee dist/SHA256SUMS.txt
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: auralis-unified-arm64-debug
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish build prerelease
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/auralis-unified'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: auralis-unified-v0.1.${{ github.run_number }}
+          name: Auralis Unified v0.1.${{ github.run_number }}
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            dist/auralis-unified-arm64-debug.apk
+            dist/SHA256SUMS.txt
