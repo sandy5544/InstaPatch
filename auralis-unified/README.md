@@ -17,6 +17,8 @@ A standalone Android music-player project combining the Android-native playback 
 - Local music library, downloads, metadata, artwork, lyrics and player settings from the Android base.
 - Optional provider modules and the existing LastWave module framework.
 
+Pinned Android source revision: `7028d286acfe8245270a6936e33b4d8006a53df5` (2026-11-04). The BitChord desktop reference inspected for this integration is `d0512d3c2eb839276a356e5ab5ffcc03b127aba9`.
+
 The precise feature set is determined by the pinned upstream commit. No encrypted third-party module keys, credentials, or proprietary services are embedded by this wrapper.
 
 ## Build
