@@ -9,6 +9,8 @@ on:
     paths:
       - "standalone-player/**"
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   debug-apk:
     runs-on: ubuntu-latest
@@ -28,3 +30,18 @@ jobs:
         with:
           name: auralis-player-debug
           path: standalone-player/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish APK to latest GitHub Release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APK_PATH: standalone-player/app/build/outputs/apk/debug/app-debug.apk
+          TAG: auralis-v0.1.0
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK_PATH" --clobber
+          else
+            gh release create "$TAG" "$APK_PATH#Auralis Player APK" \
+              --target "$GITHUB_SHA" \
+              --title "Auralis Player v0.1.0" \
+              --notes "First public debug build of Auralis Player. This is an early development build, not the completed BitChord + LastWave hybrid. See the standalone-player README for implemented features and current limitations."
+          fi
