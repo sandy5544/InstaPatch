@@ -1,0 +1,3 @@
+[submodule "auralis-unified/lastwave"]
+	path = auralis-unified/lastwave
+	url = https://github.com/pm-official-id/Your-LastWave.git
