@@ -34,6 +34,12 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Set up Android SDK and NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install pinned Android NDK
+        run: sdkmanager "ndk;30.0.16248370" "cmake;3.22.1"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
